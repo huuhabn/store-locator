@@ -97,9 +97,6 @@ msgstr "تصفية حسب العلامة التجارية"
 msgid "Loading stores…"
 msgstr "جارٍ تحميل المتاجر…"
 
-msgid "View Map"
-msgstr "عرض الخريطة"
-
 msgid "Store Locator"
 msgstr "محدد المتاجر"
 

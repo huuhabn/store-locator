@@ -82,8 +82,6 @@ class StoreController {
 		$meta_query = array( 'relation' => 'AND' );
 
 		$filter_map = array(
-			'brand'    => '_asl_brand',
-			'country'  => '_asl_country',
 			'city'     => '_asl_city',
 		);
 
@@ -96,6 +94,26 @@ class StoreController {
 					'compare' => '=',
 				);
 			}
+		}
+
+		$tax_query = array( 'relation' => 'AND' );
+
+		$brand = $request->get_param( 'brand' );
+		if ( ! empty( $brand ) ) {
+			$tax_query[] = array(
+				'taxonomy' => 'store_brand',
+				'field'    => 'name',
+				'terms'    => $brand,
+			);
+		}
+
+		$country = $request->get_param( 'country' );
+		if ( ! empty( $country ) ) {
+			$tax_query[] = array(
+				'taxonomy' => 'store_country',
+				'field'    => 'name',
+				'terms'    => $country,
+			);
 		}
 
 		$services = $request->get_param( 'services' );
@@ -119,6 +137,10 @@ class StoreController {
 
 		if ( count( $meta_query ) > 1 ) {
 			$args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		}
+
+		if ( ! empty( $tax_query ) ) {
+			$args['tax_query'] = $tax_query;
 		}
 
 		$search = $request->get_param( 'search' );
@@ -227,12 +249,95 @@ class StoreController {
 		}
 		sort( $services );
 
-		$brands = $get_distinct( '_asl_brand' );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'store_brand',
+				'hide_empty' => false,
+			)
+		);
+		$brands = array();
+		if ( ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $term ) {
+				$brands[] = $term->name;
+			}
+		}
+
+		// Fallback to legacy distinct metadata if taxonomy is completely empty.
+		if ( empty( $brands ) ) {
+			$brands = $get_distinct( '_asl_brand' );
+		}
+
+		$country_terms = get_terms(
+			array(
+				'taxonomy'   => 'store_country',
+				'hide_empty' => false,
+			)
+		);
+		$countries = array();
+		if ( ! is_wp_error( $country_terms ) && ! empty( $country_terms ) ) {
+			$default_codes = array(
+				'saudi arabia'         => 'SA',
+				'kuwait'               => 'KW',
+				'united arab emirates' => 'AE',
+				'uae'                  => 'AE',
+				'qatar'                => 'QA',
+				'oman'                 => 'OM',
+				'bahrain'              => 'BH',
+				'egypt'                => 'EG',
+				'jordan'               => 'JO',
+				'spain'                => 'ES',
+				'españa'               => 'ES',
+				'united states'        => 'US',
+				'usa'                  => 'US',
+			);
+			foreach ( $country_terms as $term ) {
+				$code = get_term_meta( $term->term_id, 'asl_country_code', true );
+				if ( ! $code ) {
+					// Fallback to guess country code based on term name
+					$norm_name = strtolower( trim( $term->name ) );
+					$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
+				}
+				$flag = $code ? StorePostType::country_code_to_flag( $code ) : '';
+				$countries[] = array(
+					'name' => $term->name,
+					'flag' => $flag,
+				);
+			}
+		}
+
+		// Fallback to legacy distinct metadata with flag guessing if taxonomy is completely empty.
+		if ( empty( $countries ) ) {
+			$legacy_countries = $get_distinct( '_asl_country' );
+			$default_codes = array(
+				'saudi arabia'         => 'SA',
+				'kuwait'               => 'KW',
+				'united arab emirates' => 'AE',
+				'uae'                  => 'AE',
+				'qatar'                => 'QA',
+				'oman'                 => 'OM',
+				'bahrain'              => 'BH',
+				'egypt'                => 'EG',
+				'jordan'               => 'JO',
+				'spain'                => 'ES',
+				'españa'               => 'ES',
+				'united states'        => 'US',
+				'usa'                  => 'US',
+			);
+			foreach ( $legacy_countries as $name ) {
+				$norm_name = strtolower( trim( $name ) );
+				$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
+				$flag      = $code ? StorePostType::country_code_to_flag( $code ) : '';
+				$countries[] = array(
+					'name' => $name,
+					'flag' => $flag,
+				);
+			}
+		}
 
 		return new WP_REST_Response(
 			array(
 				'brands'          => $brands,
-				'countries'       => $get_distinct( '_asl_country' ),
+				'countries'       => $countries,
 				'cities'          => $get_distinct( '_asl_city' ),
 				'services'        => $services,
 				'brandLogos'      => BrandLogos::map_for_brands( $brands ),
@@ -278,8 +383,24 @@ class StoreController {
 			// Decoding here keeps the API contract as plain text, with
 			// exactly one escaping step happening (in the browser).
 			'name'           => $this->decode_entities( get_the_title( $id ) ),
-			'brand'          => $this->decode_entities( get_post_meta( $id, '_asl_brand', true ) ),
-			'country'        => $this->decode_entities( get_post_meta( $id, '_asl_country', true ) ),
+			'brand'          => $this->decode_entities(
+				( function() use ( $id ) {
+					$store_brands = wp_get_post_terms( $id, 'store_brand' );
+					if ( ! is_wp_error( $store_brands ) && ! empty( $store_brands ) ) {
+						return $store_brands[0]->name;
+					}
+					return get_post_meta( $id, '_asl_brand', true );
+				} )()
+			),
+			'country'        => $this->decode_entities(
+				( function() use ( $id ) {
+					$store_countries = wp_get_post_terms( $id, 'store_country' );
+					if ( ! is_wp_error( $store_countries ) && ! empty( $store_countries ) ) {
+						return $store_countries[0]->name;
+					}
+					return get_post_meta( $id, '_asl_country', true );
+				} )()
+			),
 			'city'           => $this->decode_entities( get_post_meta( $id, '_asl_city', true ) ),
 			'address'        => $this->decode_entities( get_post_meta( $id, '_asl_address', true ) ),
 			'latitude'       => $lat,

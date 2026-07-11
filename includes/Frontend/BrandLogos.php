@@ -83,6 +83,23 @@ class BrandLogos {
 	 * @return string
 	 */
 	public static function get_url( $brand ) {
+		// 1. Try to get it from custom taxonomy term meta (icon thumbnail) first.
+		$term = get_term_by( 'name', $brand, 'store_brand' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$thumb_id = get_term_meta( $term->term_id, 'asl_brand_icon_id', true );
+			if ( ! $thumb_id ) {
+				// Fallback to the main thumbnail ID if icon is not set separately
+				$thumb_id = get_term_meta( $term->term_id, 'asl_brand_thumbnail_id', true );
+			}
+			if ( $thumb_id ) {
+				$url = wp_get_attachment_url( $thumb_id );
+				if ( $url ) {
+					return $url;
+				}
+			}
+		}
+
+		// 2. Fallback to static catalog
 		$slug = self::match_slug( $brand );
 		if ( ! $slug ) {
 			return '';
@@ -103,6 +120,19 @@ class BrandLogos {
 	 * @return string
 	 */
 	public static function get_full_url( $brand ) {
+		// 1. Try to get it from custom taxonomy term meta (full logo thumbnail) first.
+		$term = get_term_by( 'name', $brand, 'store_brand' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$thumb_id = get_term_meta( $term->term_id, 'asl_brand_thumbnail_id', true );
+			if ( $thumb_id ) {
+				$url = wp_get_attachment_url( $thumb_id );
+				if ( $url ) {
+					return $url;
+				}
+			}
+		}
+
+		// 2. Fallback to static catalog
 		$slug = self::match_slug( $brand );
 		if ( ! $slug ) {
 			return '';

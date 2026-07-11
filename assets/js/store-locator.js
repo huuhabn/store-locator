@@ -86,7 +86,7 @@
 		this.stores = [];
 		this.filtered = [];
 		this.userLocation = null;
-		this.activeBrand = '';
+		this.activeBrand = root.getAttribute( 'data-default-brand' ) || '';
 		this.mobileView = 'list';
 		this.filterData = { brands: [], countries: [] };
 
@@ -154,12 +154,17 @@
 	};
 
 	ASLLocator.prototype.initLeafletMap = function ( center, zoom ) {
-		this.map = L.map( this.els.mapEl, { zoomControl: true } ).setView( center, zoom );
+		this.map = L.map( this.els.mapEl, {
+			zoomControl: false,
+			scrollWheelZoom: !!settings.scrollZoom,
+			attributionControl: false,
+		} ).setView( center, zoom );
+
+		L.control.zoom( { position: 'topright' } ).addTo( this.map );
 
 		var tileUrl = settings.tileUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-		var attribution = settings.tileAttribution || '&copy; OpenStreetMap contributors';
 
-		L.tileLayer( tileUrl, { maxZoom: 19, attribution: attribution } ).addTo( this.map );
+		L.tileLayer( tileUrl, { maxZoom: 19 } ).addTo( this.map );
 
 		if ( typeof L.markerClusterGroup === 'function' ) {
 			this.markerLayer = L.markerClusterGroup();
@@ -186,6 +191,8 @@
 			mapTypeControl: false,
 			streetViewControl: false,
 			fullscreenControl: true,
+			scrollwheel: !!settings.scrollZoom,
+			gestureHandling: settings.scrollZoom ? 'auto' : 'cooperative',
 		};
 
 		if ( 'dark' === settings.tileStyle ) {
@@ -308,14 +315,14 @@
 
 		if ( this.els.country ) {
 			this.els.country.addEventListener( 'change', function () {
-				self.applyFilters();
+				// Wait for search button click to apply filters
 			} );
 		}
 
 		if ( this.els.brand ) {
 			this.els.brand.addEventListener( 'change', function () {
 				self.setActiveBrand( self.els.brand.value );
-				self.applyFilters();
+				// Wait for search button click to apply filters
 			} );
 		}
 
@@ -401,7 +408,21 @@
 			} )
 			.then( function ( data ) {
 				self.filterData = data || { brands: [], countries: [] };
-				self.populateSelect( self.els.country, data.countries );
+
+				// Populate country dropdown with flag emojis
+				if ( self.els.country && data.countries ) {
+					// Clear existing options except the first one (All Countries placeholder)
+					while ( self.els.country.options.length > 1 ) {
+						self.els.country.remove( 1 );
+					}
+					data.countries.forEach( function ( country ) {
+						var opt = document.createElement( 'option' );
+						opt.value = country.name;
+						opt.textContent = ( country.flag ? country.flag + ' ' : '' ) + country.name;
+						self.els.country.appendChild( opt );
+					} );
+				}
+
 				self.populateSelect( self.els.brand, data.brands );
 				// Merge server-resolved logo maps into the local variables so
 				// all subsequent renders use the freshest URLs.
@@ -412,6 +433,11 @@
 					Object.assign( brandLogosFull, data.brandLogosFull );
 				}
 				self.renderBrandPills( data.brands || [] );
+
+				// Synchronize UI dropdown and active pills state with the default activeBrand on load
+				if ( self.activeBrand ) {
+					self.setActiveBrand( self.activeBrand );
+				}
 			} )
 			.catch( function () {
 				/* Progressive enhancement. */

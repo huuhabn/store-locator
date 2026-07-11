@@ -6,63 +6,84 @@
    stylesheet dependency), so branding stays consistent between
    the locator widget and the detail page automatically.
 
-   Layout modeled after Victoria's Secret's store detail pages:
-   breadcrumb -> title -> three-column info panel (details / hours
-   / services, divided by vertical rules) -> map -> content.
+   Layout aligned with Aseer Time Store Locator (Figma Design):
+   breadcrumb -> title & brand -> white boxed panel with three-columns
+   (details / hours / services) -> map -> content.
    ========================================================= */
 
 .asl-store-detail {
 	display: block;
-	grid-template-columns: none;
-	border: none;
-	overflow: visible;
-	max-width: 1100px;
+	max-width: 1118px;
 	margin: 0 auto;
-	padding: 28px 16px 56px;
+	padding: 40px 16px 80px;
+	font-family: var(--asl-font);
+	color: var(--asl-color-text);
+	box-sizing: border-box;
+}
+
+.asl-store-detail *,
+.asl-store-detail *::before,
+.asl-store-detail *::after {
+	box-sizing: inherit;
 }
 
 /* ---------------- Breadcrumb ---------------- */
 
 .asl-store-detail__breadcrumb {
-	font-size: 12px;
+	font-family: var(--asl-font);
+	font-size: 14px;
+	font-weight: 500;
 	color: var(--asl-color-muted);
-	margin-bottom: 20px;
+	margin-bottom: 24px;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
 }
 
 .asl-store-detail__breadcrumb a {
 	color: var(--asl-color-muted);
-	text-decoration: underline;
+	text-decoration: none;
 }
 
 .asl-store-detail__breadcrumb a:hover {
-	color: var(--asl-color-text);
+	color: var(--asl-color-primary);
+	text-decoration: underline;
 }
 
 .asl-store-detail__breadcrumb-sep {
-	margin: 0 6px;
+	margin: 0 8px;
+	color: var(--asl-color-border-light);
 }
 
 .asl-store-detail__breadcrumb [aria-current="page"] {
-	color: var(--asl-color-text);
+	color: var(--asl-color-primary);
+	font-weight: 700;
 }
 
 /* ---------------- Heading ---------------- */
 
 .asl-store-detail__heading {
-	margin-bottom: 24px;
+	margin-bottom: 32px;
 }
 
 .asl-store-detail__title {
-	font-size: 26px;
+	font-family: var(--asl-font);
+	font-size: clamp(32px, 5vw, 54px);
 	font-weight: 700;
-	line-height: 1.2;
-	margin: 0 0 4px;
+	line-height: 1.1;
+	text-transform: uppercase;
+	color: var(--asl-color-heading);
+	margin: 0 0 8px;
+	letter-spacing: -0.01em;
 }
 
 .asl-store-detail__brand {
-	font-size: 14px;
-	color: var(--asl-color-text);
+	font-family: var(--asl-font);
+	font-size: 16px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: var(--asl-color-primary);
 	margin: 0;
+	letter-spacing: 0.05em;
 }
 
 /* ---------------- Three-column info panel ---------------- */
@@ -71,81 +92,130 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
 	gap: 0;
-	border-top: 1px solid var(--asl-color-border);
-	border-bottom: 1px solid var(--asl-color-border);
-	margin-bottom: 28px;
+	background: var(--asl-color-bg);
+	border: 1px solid var(--asl-color-border-light);
+	border-radius: var(--asl-radius-panel);
+	margin-bottom: 40px;
+	overflow: hidden;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .asl-store-detail__col {
-	padding: 20px 28px;
-	border-left: 1px solid var(--asl-color-border);
+	padding: 32px 40px;
+	border-left: 1px solid var(--asl-color-border-light);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
 }
 
 .asl-store-detail__col:first-child {
 	border-left: none;
-	padding-left: 0;
 }
 
+/* Align column 3 inside the panel layout cleanly */
 .asl-store-detail__col--card {
-	border: 1px solid var(--asl-color-border);
-	border-radius: var(--asl-radius);
-	margin: 12px 12px 12px 28px;
-	background: var(--asl-color-bg-alt);
+	border-left: 1px solid var(--asl-color-border-light);
+	background: var(--asl-color-bg);
 }
 
 .asl-store-detail__col-label {
-	font-size: 11px;
+	font-family: var(--asl-font);
+	font-size: 18px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--asl-color-text);
-	margin: 0 0 14px;
+	letter-spacing: 0.04em;
+	color: var(--asl-color-heading);
+	margin: 0 0 20px;
+	border-bottom: 2px solid var(--asl-color-primary);
+	display: inline-block;
+	padding-bottom: 4px;
 }
 
 /* Column 1: details */
 
 .asl-store-detail__address {
-	font-size: 14px;
+	font-size: 16px;
 	line-height: 1.5;
-	margin: 0 0 10px;
+	color: var(--asl-color-subtext);
+	margin: 0 0 16px;
 }
 
 .asl-store-detail__phone {
-	font-size: 14px;
-	margin: 0 0 10px;
+	font-size: 16px;
+	margin: 0 0 12px;
 }
 
 .asl-store-detail__phone a {
 	color: var(--asl-color-text);
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.asl-store-detail__phone a:hover {
+	color: var(--asl-color-primary);
+	text-decoration: underline;
 }
 
 .asl-locator a.asl-btn.asl-btn--cta {
-	background: var(--asl-color-panel);
-	border-color: var(--asl-color-panel);
-	color: var(--asl-color-text);
-	margin-top: 6px;
+	background: var(--asl-color-secondary);
+	border: none;
+	color: #ffffff;
+	margin-top: 16px;
+	padding: 12px 24px;
+	font-size: 16px;
+	font-weight: 700;
+	text-transform: uppercase;
+	border-radius: var(--asl-radius-sm);
+	transition: background-color 0.15s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
 }
 
 .asl-locator a.asl-btn.asl-btn--cta:hover {
-	opacity: 0.85;
-	color: var(--asl-color-text);
+	background: var(--asl-color-secondary-hover);
+	color: #ffffff;
+	opacity: 1;
 }
 
 /* Column 2: hours */
 
+.asl-status {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 12px;
+	border-radius: var(--asl-radius-sm);
+	font-family: var(--asl-font);
+	font-size: 14px;
+	font-weight: 700;
+	text-transform: uppercase;
+	margin: 0 0 20px;
+	letter-spacing: 0.02em;
+}
+
+.asl-status--open {
+	background: #e6f4ea;
+	color: var(--asl-color-secondary);
+}
+
+.asl-status--closed {
+	background: #fce8e6;
+	color: var(--asl-color-primary);
+}
+
 .asl-store-detail__status {
-	font-size: 13px;
-	margin: -2px 0 14px;
+	margin: 0 0 20px;
 }
 
 .asl-store-detail__hours-table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: 13px;
+	font-size: 15px;
 }
 
 .asl-store-detail__hours-table tr {
-	border-bottom: 1px solid var(--asl-color-border);
+	border-bottom: 1px solid var(--asl-color-border-light);
 }
 
 .asl-store-detail__hours-table tr:last-child {
@@ -154,29 +224,63 @@
 
 .asl-store-detail__hours-table th,
 .asl-store-detail__hours-table td {
-	padding: 7px 0;
-	text-align: left;
-	font-weight: 400;
+	padding: 8px 0;
+	font-weight: 500;
 	color: var(--asl-color-muted);
 }
 
 .asl-store-detail__hours-table th {
-	width: 46%;
+	width: 45%;
 	color: var(--asl-color-text);
+	text-align: left;
 }
 
 .asl-store-detail__hours-table td {
 	text-align: right;
+	color: var(--asl-color-subtext);
+}
+
+/* Column 3: services */
+
+.asl-card__tag-label {
+	font-family: var(--asl-font);
+	font-size: 14px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: var(--asl-color-muted);
+	margin: 0 0 12px;
+	letter-spacing: 0.02em;
+}
+
+.asl-card__services {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0;
+}
+
+.asl-chip {
+	background: var(--asl-color-page);
+	color: var(--asl-color-heading);
+	border: 1px solid var(--asl-color-border-light);
+	border-radius: var(--asl-radius-md);
+	padding: 8px 14px;
+	font-family: var(--asl-font);
+	font-size: 14px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.01em;
 }
 
 /* ---------------- Map ---------------- */
 
 .asl-store-detail__map {
 	width: 100%;
-	height: 320px;
-	border-radius: var(--asl-radius);
-	border: 1px solid var(--asl-color-border);
-	margin-bottom: 32px;
+	height: 400px;
+	border-radius: var(--asl-radius-panel);
+	border: 1px solid var(--asl-color-border-light);
+	margin-bottom: 40px;
+	overflow: hidden;
 }
 
 .asl-map-error {
@@ -185,26 +289,35 @@
 	justify-content: center;
 	height: 100%;
 	color: var(--asl-color-muted);
-	background: var(--asl-color-bg-alt);
-	font-size: 14px;
+	background: var(--asl-color-page);
+	font-size: 16px;
 }
 
 /* ---------------- Content section ---------------- */
 
 .asl-store-detail__content {
-	font-size: 15px;
+	font-size: 16px;
 	line-height: 1.7;
 	max-width: 860px;
+	color: var(--asl-color-subtext);
 }
 
 .asl-store-detail__content h2 {
-	font-size: 22px;
-	margin: 0 0 14px;
+	font-family: var(--asl-font);
+	font-size: 28px;
+	font-weight: 700;
+	color: var(--asl-color-heading);
+	margin: 0 0 16px;
+	text-transform: uppercase;
 }
 
 .asl-store-detail__content h3 {
-	font-size: 17px;
-	margin: 28px 0 10px;
+	font-family: var(--asl-font);
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--asl-color-heading);
+	margin: 32px 0 12px;
+	text-transform: uppercase;
 }
 
 .asl-store-detail__content p {
@@ -212,9 +325,38 @@
 }
 
 .asl-store-detail__content a {
-	color: var(--asl-color-text);
+	color: var(--asl-color-primary);
 	text-decoration: underline;
 }
+
+.asl-store-detail__content a:hover {
+	color: var(--asl-color-primary-hover);
+}
+
+/* ---------------- RTL Support ---------------- */
+
+[dir="rtl"] .asl-store-detail {
+	text-align: right;
+}
+
+[dir="rtl"] .asl-store-detail__col {
+	border-left: none;
+	border-right: 1px solid var(--asl-color-border-light);
+}
+
+[dir="rtl"] .asl-store-detail__col:first-child {
+	border-right: none;
+}
+
+[dir="rtl"] .asl-store-detail__hours-table th {
+	text-align: right;
+}
+
+[dir="rtl"] .asl-store-detail__hours-table td {
+	text-align: left;
+}
+
+/* ---------------- Responsive ---------------- */
 
 @media (max-width: 900px) {
 	.asl-store-detail__panel {
@@ -223,8 +365,14 @@
 
 	.asl-store-detail__col {
 		border-left: none;
-		border-top: 1px solid var(--asl-color-border);
-		padding: 20px 0;
+		border-right: none;
+		border-top: 1px solid var(--asl-color-border-light);
+		padding: 32px 24px;
+	}
+
+	[dir="rtl"] .asl-store-detail__col {
+		border-left: none;
+		border-right: none;
 	}
 
 	.asl-store-detail__col:first-child {
@@ -232,7 +380,7 @@
 	}
 
 	.asl-store-detail__col--card {
-		margin: 12px 0;
-		padding: 16px 20px;
+		border-top: 1px solid var(--asl-color-border-light);
+		padding: 32px 24px;
 	}
 }

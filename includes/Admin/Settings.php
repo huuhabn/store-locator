@@ -53,6 +53,7 @@ class Settings {
 			'default_center_lat'  => '20',
 			'default_center_lng'  => '0',
 			'default_zoom'        => '4',
+			'scroll_zoom'         => '0',
 		);
 	}
 
@@ -162,6 +163,7 @@ class Settings {
 		add_settings_field( 'tile_style', __( 'Map Style', 'aseer-store-locator' ), array( $this, 'field_tile_style' ), self::PAGE_SLUG, self::SECTION_MAP );
 		add_settings_field( 'default_center', __( 'Default Map Center', 'aseer-store-locator' ), array( $this, 'field_default_center' ), self::PAGE_SLUG, self::SECTION_MAP );
 		add_settings_field( 'default_zoom', __( 'Default Zoom Level', 'aseer-store-locator' ), array( $this, 'field_default_zoom' ), self::PAGE_SLUG, self::SECTION_MAP );
+		add_settings_field( 'scroll_zoom', __( 'Scroll Wheel Zoom', 'aseer-store-locator' ), array( $this, 'field_scroll_zoom' ), self::PAGE_SLUG, self::SECTION_MAP );
 	}
 
 	/**
@@ -211,6 +213,8 @@ class Settings {
 			? (int) $input['default_zoom']
 			: (int) $defaults['default_zoom'];
 		$clean['default_zoom'] = (string) max( 1, min( 19, $zoom ) );
+
+		$clean['scroll_zoom'] = isset( $input['scroll_zoom'] ) && '1' === (string) $input['scroll_zoom'] ? '1' : '0';
 
 		return $clean;
 	}
@@ -423,5 +427,22 @@ class Settings {
 			esc_attr( $settings['default_zoom'] )
 		);
 		echo '<p class="description">' . esc_html__( 'Used whenever the [store_locator] shortcode does not set its own default_zoom attribute.', 'aseer-store-locator' ) . '</p>';
+	}
+
+	/**
+	 * Scroll Wheel Zoom setting field.
+	 *
+	 * @return void
+	 */
+	public function field_scroll_zoom() {
+		$settings = self::get();
+		$checked  = isset( $settings['scroll_zoom'] ) && '1' === (string) $settings['scroll_zoom'] ? '1' : '0';
+		printf(
+			'<input type="checkbox" id="scroll_zoom" name="%1$s[scroll_zoom]" value="1" %2$s />',
+			esc_attr( self::OPTION_KEY ),
+			checked( '1', $checked, false )
+		);
+		echo ' <label for="scroll_zoom">' . esc_html__( 'Enable map zoom with mouse scroll wheel', 'aseer-store-locator' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'When disabled (default), scrolling the page over the map won\'t accidentally zoom the map. Recommended for better page-scrolling usability on mobile and desktop.', 'aseer-store-locator' ) . '</p>';
 	}
 }

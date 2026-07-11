@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $height         = isset( $atts['height'] ) ? $atts['height'] : '689px';
 $default_zoom   = isset( $atts['default_zoom'] ) ? trim( (string) $atts['default_zoom'] ) : '';
 $default_center = isset( $atts['default_center'] ) ? trim( (string) $atts['default_center'] ) : '';
+$default_brand  = isset( $atts['default_brand'] ) ? trim( (string) $atts['default_brand'] ) : '';
 $show_hero      = ! isset( $atts['show_hero'] ) || '0' !== (string) $atts['show_hero'];
 $hero_title     = isset( $atts['hero_title'] ) && '' !== $atts['hero_title']
 	? $atts['hero_title']
@@ -28,6 +29,7 @@ $instance_id    = isset( $atts['instance_id'] ) ? sanitize_html_class( $atts['in
 	id="<?php echo esc_attr( $instance_id ); ?>"
 	data-default-zoom="<?php echo esc_attr( $default_zoom ); ?>"
 	data-default-center="<?php echo esc_attr( $default_center ); ?>"
+	data-default-brand="<?php echo esc_attr( $default_brand ); ?>"
 	style="--asl-map-height: <?php echo esc_attr( $height ); ?>;"
 >
 

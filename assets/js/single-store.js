@@ -47,16 +47,17 @@
 
 	function initLeafletMiniMap( el, lat, lng, title, settings ) {
 		var tileUrl = settings.tileUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-		var attribution = settings.tileAttribution || '&copy; OpenStreetMap contributors';
 
 		var map = L.map( el, {
-			zoomControl: true,
+			zoomControl: false,
 			scrollWheelZoom: false,
+			attributionControl: false,
 		} ).setView( [ lat, lng ], 15 );
+
+		L.control.zoom( { position: 'topright' } ).addTo( map );
 
 		L.tileLayer( tileUrl, {
 			maxZoom: 19,
-			attribution: attribution,
 		} ).addTo( map );
 
 		var icon;

@@ -343,7 +343,21 @@ class Import {
 				continue;
 			}
 
-			$brand = isset( $data['brand'] ) ? sanitize_text_field( $data['brand'] ) : '';
+			// Support both legacy "brand" and new "store_brand" column names
+			$brand = '';
+			if ( isset( $data['store_brand'] ) ) {
+				$brand = sanitize_text_field( $data['store_brand'] );
+			} elseif ( isset( $data['brand'] ) ) {
+				$brand = sanitize_text_field( $data['brand'] );
+			}
+
+			// Support both legacy "country" and new "store_country" column names
+			$country = '';
+			if ( isset( $data['store_country'] ) ) {
+				$country = sanitize_text_field( $data['store_country'] );
+			} elseif ( isset( $data['country'] ) ) {
+				$country = sanitize_text_field( $data['country'] );
+			}
 
 			$existing_id = $this->find_existing_store( $name, $brand );
 
@@ -364,7 +378,7 @@ class Import {
 
 			$meta_map = array(
 				'_asl_brand'         => $brand,
-				'_asl_country'       => isset( $data['country'] ) ? sanitize_text_field( $data['country'] ) : '',
+				'_asl_country'       => $country,
 				'_asl_city'          => isset( $data['city'] ) ? sanitize_text_field( $data['city'] ) : '',
 				'_asl_address'       => isset( $data['address'] ) ? sanitize_text_field( $data['address'] ) : '',
 				'_asl_latitude'      => (string) $lat,
@@ -376,6 +390,57 @@ class Import {
 
 			foreach ( $meta_map as $key => $value ) {
 				update_post_meta( $post_id, $key, $value );
+			}
+
+			if ( ! empty( $brand ) ) {
+				$term = get_term_by( 'name', $brand, 'store_brand' );
+				if ( ! $term ) {
+					$term_data = wp_insert_term( $brand, 'store_brand' );
+					$term_id   = ! is_wp_error( $term_data ) ? $term_data['term_id'] : 0;
+				} else {
+					$term_id = $term->term_id;
+				}
+				if ( $term_id ) {
+					wp_set_object_terms( $post_id, array( (int) $term_id ), 'store_brand' );
+				}
+			}
+
+			if ( ! empty( $country ) ) {
+				$term = get_term_by( 'name', $country, 'store_country' );
+				if ( ! $term ) {
+					$default_codes = array(
+						'saudi arabia'         => 'SA',
+						'kuwait'               => 'KW',
+						'united arab emirates' => 'AE',
+						'uae'                  => 'AE',
+						'qatar'                => 'QA',
+						'oman'                 => 'OM',
+						'bahrain'              => 'BH',
+						'egypt'                => 'EG',
+						'jordan'               => 'JO',
+						'spain'                => 'ES',
+						'españa'               => 'ES',
+						'united states'        => 'US',
+						'usa'                  => 'US',
+					);
+					$norm_name = strtolower( trim( $country ) );
+					$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
+
+					$term_data = wp_insert_term( $country, 'store_country' );
+					if ( ! is_wp_error( $term_data ) && $term_data ) {
+						$term_id = $term_data['term_id'];
+						if ( $code ) {
+							update_term_meta( $term_id, 'asl_country_code', $code );
+						}
+					} else {
+						$term_id = 0;
+					}
+				} else {
+					$term_id = $term->term_id;
+				}
+				if ( $term_id ) {
+					wp_set_object_terms( $post_id, array( (int) $term_id ), 'store_country' );
+				}
 			}
 
 			if ( $existing_id ) {

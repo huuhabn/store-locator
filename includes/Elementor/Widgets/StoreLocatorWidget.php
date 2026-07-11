@@ -195,6 +195,17 @@ class StoreLocatorWidget extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'default_brand',
+			array(
+				'label'       => esc_html__( 'Default Brand', 'aseer-store-locator' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => '',
+				'options'     => $this->get_brand_options(),
+				'description' => esc_html__( 'Select a brand to filter the locator by default on page load.', 'aseer-store-locator' ),
+			)
+		);
+
 		$this->end_controls_section();
 	}
 
@@ -411,6 +422,7 @@ class StoreLocatorWidget extends Widget_Base {
 			'height'         => ! empty( $settings['map_height'] ) ? $settings['map_height'] : '689px',
 			'default_zoom'   => '' !== $settings['default_zoom'] ? (string) $settings['default_zoom'] : '',
 			'default_center' => ! empty( $settings['default_center'] ) ? $settings['default_center'] : '',
+			'default_brand'  => ! empty( $settings['default_brand'] ) ? $settings['default_brand'] : '',
 			'show_hero'      => ( 'yes' === $settings['show_hero'] ) ? '1' : '0',
 			'hero_title'     => ! empty( $settings['hero_title'] ) ? $settings['hero_title'] : '',
 			'hero_subtitle'  => ! empty( $settings['hero_subtitle'] ) ? $settings['hero_subtitle'] : '',
@@ -422,5 +434,32 @@ class StoreLocatorWidget extends Widget_Base {
 		Assets::$is_active = true;
 
 		Templates::get_template( 'locator.php', array( 'atts' => $atts ) );
+	}
+
+	/**
+	 * Get list of brand taxonomy terms for Elementor select control.
+	 *
+	 * @return array<string,string> name => label
+	 */
+	private function get_brand_options() {
+		$options = array(
+			'' => esc_html__( 'All Brands', 'aseer-store-locator' ),
+		);
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'store_brand',
+				'hide_empty' => false,
+			)
+		);
+
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			foreach ( $terms as $term ) {
+				// The frontend JS filters by term name, so we use term name as key.
+				$options[ $term->name ] = $term->name;
+			}
+		}
+
+		return $options;
 	}
 }

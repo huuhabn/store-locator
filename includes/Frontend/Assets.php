@@ -241,6 +241,7 @@ class Assets {
 					'lng' => (float) $settings['default_center_lng'],
 				),
 				'defaultZoom'     => (int) $settings['default_zoom'],
+				'scrollZoom'      => '1' === (string) $settings['scroll_zoom'],
 			),
 			// Static fallback brand logo maps populated before REST /filters loads.
 			'brandLogos'     => BrandLogos::static_icon_map(),

@@ -137,6 +137,66 @@ class MetaBoxes {
 				update_post_meta( $post_id, $key, $clean );
 			}
 		}
+
+		// Synchronize brand meta to store_brand taxonomy term when saving manually.
+		if ( isset( $_POST['_asl_brand'] ) ) {
+			$brand_name = sanitize_text_field( wp_unslash( $_POST['_asl_brand'] ) );
+			if ( ! empty( $brand_name ) ) {
+				$term = get_term_by( 'name', $brand_name, 'store_brand' );
+				if ( ! $term ) {
+					$term_data = wp_insert_term( $brand_name, 'store_brand' );
+					$term_id   = ! is_wp_error( $term_data ) ? $term_data['term_id'] : 0;
+				} else {
+					$term_id = $term->term_id;
+				}
+				if ( $term_id ) {
+					wp_set_object_terms( $post_id, array( (int) $term_id ), 'store_brand' );
+				}
+			} else {
+				wp_set_object_terms( $post_id, array(), 'store_brand' );
+			}
+		}
+
+		// Synchronize country meta to store_country taxonomy term when saving manually.
+		if ( isset( $_POST['_asl_country'] ) ) {
+			$country_name = sanitize_text_field( wp_unslash( $_POST['_asl_country'] ) );
+			if ( ! empty( $country_name ) ) {
+				$term = get_term_by( 'name', $country_name, 'store_country' );
+				if ( ! $term ) {
+					$default_codes = array(
+						'saudi arabia'         => 'SA',
+						'kuwait'               => 'KW',
+						'united arab emirates' => 'AE',
+						'uae'                  => 'AE',
+						'qatar'                => 'QA',
+						'oman'                 => 'OM',
+						'bahrain'              => 'BH',
+						'egypt'                => 'EG',
+						'jordan'               => 'JO',
+						'spain'                => 'ES',
+					);
+					$norm_name = strtolower( trim( $country_name ) );
+					$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
+
+					$term_data = wp_insert_term( $country_name, 'store_country' );
+					if ( ! is_wp_error( $term_data ) && $term_data ) {
+						$term_id = $term_data['term_id'];
+						if ( $code ) {
+							update_term_meta( $term_id, 'asl_country_code', $code );
+						}
+					} else {
+						$term_id = 0;
+					}
+				} else {
+					$term_id = $term->term_id;
+				}
+				if ( $term_id ) {
+					wp_set_object_terms( $post_id, array( (int) $term_id ), 'store_country' );
+				}
+			} else {
+				wp_set_object_terms( $post_id, array(), 'store_country' );
+			}
+		}
 	}
 
 	/**

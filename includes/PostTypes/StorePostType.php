@@ -105,9 +105,30 @@ class StorePostType {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Hook into WordPress.
+	 *
+	 * @return void
+	 */
 	public function register() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_action( 'init', array( $this, 'register_meta' ) );
+		add_action( 'admin_init', array( $this, 'migrate_legacy_data' ) );
+
+		// Brand taxonomy term meta fields hooks
+		add_action( 'store_brand_add_form_fields', array( $this, 'add_brand_fields' ), 10, 2 );
+		add_action( 'store_brand_edit_form_fields', array( $this, 'edit_brand_fields' ), 10, 2 );
+		add_action( 'created_store_brand', array( $this, 'save_brand_fields' ), 10, 2 );
+		add_action( 'edited_store_brand', array( $this, 'save_brand_fields' ), 10, 2 );
+
+		// Country taxonomy term meta fields hooks
+		add_action( 'store_country_add_form_fields', array( $this, 'add_country_fields' ), 10, 2 );
+		add_action( 'store_country_edit_form_fields', array( $this, 'edit_country_fields' ), 10, 2 );
+		add_action( 'created_store_country', array( $this, 'save_country_fields' ), 10, 2 );
+		add_action( 'edited_store_country', array( $this, 'save_country_fields' ), 10, 2 );
+
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_term_assets' ) );
 	}
 
 	/**
@@ -178,6 +199,386 @@ class StorePostType {
 					'show_in_rest'      => false,
 				)
 			);
+		}
+	}
+
+	/**
+	 * Register the `store_brand` and `store_country` custom taxonomies.
+	 *
+	 * @return void
+	 */
+	public function register_taxonomy() {
+		// Brands
+		$labels = array(
+			'name'              => _x( 'Brands', 'taxonomy general name', 'aseer-store-locator' ),
+			'singular_name'     => _x( 'Brand', 'taxonomy singular name', 'aseer-store-locator' ),
+			'search_items'      => __( 'Search Brands', 'aseer-store-locator' ),
+			'all_items'         => __( 'All Brands', 'aseer-store-locator' ),
+			'parent_item'       => __( 'Parent Brand', 'aseer-store-locator' ),
+			'parent_item_colon' => __( 'Parent Brand:', 'aseer-store-locator' ),
+			'edit_item'         => __( 'Edit Brand', 'aseer-store-locator' ),
+			'update_item'       => __( 'Update Brand', 'aseer-store-locator' ),
+			'add_new_item'      => __( 'Add New Brand', 'aseer-store-locator' ),
+			'new_item_name'     => __( 'New Brand Name', 'aseer-store-locator' ),
+			'menu_name'         => __( 'Brands', 'aseer-store-locator' ),
+		);
+
+		$args = array(
+			'hierarchical'      => true,
+			'labels'            => $labels,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'store-brand' ),
+		);
+
+		register_taxonomy( 'store_brand', self::POST_TYPE, $args );
+
+		// Countries
+		$country_labels = array(
+			'name'              => _x( 'Countries', 'taxonomy general name', 'aseer-store-locator' ),
+			'singular_name'     => _x( 'Country', 'taxonomy singular name', 'aseer-store-locator' ),
+			'search_items'      => __( 'Search Countries', 'aseer-store-locator' ),
+			'all_items'         => __( 'All Countries', 'aseer-store-locator' ),
+			'parent_item'       => __( 'Parent Country', 'aseer-store-locator' ),
+			'parent_item_colon' => __( 'Parent Country:', 'aseer-store-locator' ),
+			'edit_item'         => __( 'Edit Country', 'aseer-store-locator' ),
+			'update_item'       => __( 'Update Country', 'aseer-store-locator' ),
+			'add_new_item'      => __( 'Add New Country', 'aseer-store-locator' ),
+			'new_item_name'     => __( 'New Country Name', 'aseer-store-locator' ),
+			'menu_name'         => __( 'Countries', 'aseer-store-locator' ),
+		);
+
+		$country_args = array(
+			'hierarchical'      => true,
+			'labels'            => $country_labels,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'store-country' ),
+		);
+
+		register_taxonomy( 'store_country', self::POST_TYPE, $country_args );
+	}
+
+	/**
+	 * Run a quick one-time lazy migration of legacy _asl_brand and _asl_country postmeta to new custom taxonomies.
+	 *
+	 * @return void
+	 */
+	public function migrate_legacy_data() {
+		// 1. Migrate Brands
+		$brand_stores = get_posts(
+			array(
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'tax_query'      => array(
+					array(
+						'taxonomy' => 'store_brand',
+						'operator' => 'NOT EXISTS',
+					),
+				),
+				'meta_query'     => array(
+					array(
+						'key'     => '_asl_brand',
+						'value'   => '',
+						'compare' => '!=',
+					),
+				),
+			)
+		);
+
+		if ( ! empty( $brand_stores ) ) {
+			foreach ( $brand_stores as $store ) {
+				$brand_name = get_post_meta( $store->ID, '_asl_brand', true );
+				if ( ! empty( $brand_name ) ) {
+					$term = get_term_by( 'name', $brand_name, 'store_brand' );
+					if ( ! $term ) {
+						$term_data = wp_insert_term( $brand_name, 'store_brand' );
+						$term_id   = ! is_wp_error( $term_data ) ? $term_data['term_id'] : 0;
+					} else {
+						$term_id = $term->term_id;
+					}
+					if ( $term_id ) {
+						wp_set_object_terms( $store->ID, array( (int) $term_id ), 'store_brand' );
+					}
+				}
+			}
+		}
+
+		// 2. Migrate Countries
+		$country_stores = get_posts(
+			array(
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'tax_query'      => array(
+					array(
+						'taxonomy' => 'store_country',
+						'operator' => 'NOT EXISTS',
+					),
+				),
+				'meta_query'     => array(
+					array(
+						'key'     => '_asl_country',
+						'value'   => '',
+						'compare' => '!=',
+					),
+				),
+			)
+		);
+
+		if ( ! empty( $country_stores ) ) {
+			foreach ( $country_stores as $store ) {
+				$country_name = get_post_meta( $store->ID, '_asl_country', true );
+				if ( ! empty( $country_name ) ) {
+					$term = get_term_by( 'name', $country_name, 'store_country' );
+					if ( ! $term ) {
+						$default_codes = array(
+							'saudi arabia'         => 'SA',
+							'kuwait'               => 'KW',
+							'united arab emirates' => 'AE',
+							'uae'                  => 'AE',
+							'qatar'                => 'QA',
+							'oman'                 => 'OM',
+							'bahrain'              => 'BH',
+							'egypt'                => 'EG',
+							'jordan'               => 'JO',
+							'spain'                => 'ES',
+						);
+						$norm_name = strtolower( trim( $country_name ) );
+						$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
+
+						$term_data = wp_insert_term( $country_name, 'store_country' );
+						if ( ! is_wp_error( $term_data ) && $term_data ) {
+							$term_id = $term_data['term_id'];
+							if ( $code ) {
+								update_term_meta( $term_id, 'asl_country_code', $code );
+							}
+						} else {
+							$term_id = 0;
+						}
+					} else {
+						$term_id = $term->term_id;
+					}
+					if ( $term_id ) {
+						wp_set_object_terms( $store->ID, array( (int) $term_id ), 'store_country' );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Render fields on the Add New Country screen.
+	 *
+	 * @return void
+	 */
+	public function add_country_fields() {
+		?>
+		<div class="form-field term-group">
+			<label for="asl_country_code"><?php esc_html_e( 'Country Code (ISO 2-letter)', 'aseer-store-locator' ); ?></label>
+			<input type="text" id="asl_country_code" name="asl_country_code" value="" style="max-width:100px; text-transform:uppercase;" maxlength="2" />
+			<p class="description"><?php esc_html_e( 'Enter the 2-letter ISO country code (e.g. SA, KW, AE, QA, OM, BH, EG, JO, ES) to automatically display its flag emoji on the frontend.', 'aseer-store-locator' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render fields on the Edit Country screen.
+	 *
+	 * @param \WP_Term $term Current term object.
+	 * @return void
+	 */
+	public function edit_country_fields( $term ) {
+		$code = get_term_meta( $term->term_id, 'asl_country_code', true );
+		?>
+		<tr class="form-field term-group-wrap">
+			<th scope="row">
+				<label for="asl_country_code"><?php esc_html_e( 'Country Code (ISO 2-letter)', 'aseer-store-locator' ); ?></label>
+			</th>
+			<td>
+				<input type="text" id="asl_country_code" name="asl_country_code" value="<?php echo esc_attr( $code ); ?>" style="max-width:100px; text-transform:uppercase;" maxlength="2" />
+				<p class="description"><?php esc_html_e( 'Enter the 2-letter ISO country code (e.g. SA, KW, AE, QA, OM, BH, EG, JO, ES) to automatically display its flag emoji on the frontend.', 'aseer-store-locator' ); ?></p>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Save term meta fields when created or edited.
+	 *
+	 * @param int $term_id Term ID.
+	 * @return void
+	 */
+	public function save_country_fields( $term_id ) {
+		if ( isset( $_POST['asl_country_code'] ) ) {
+			$code = strtoupper( sanitize_text_field( wp_unslash( $_POST['asl_country_code'] ) ) );
+			update_term_meta( $term_id, 'asl_country_code', $code );
+		}
+	}
+
+	/**
+	 * Convert a 2-letter ISO country code (e.g. 'SA') into its corresponding flag emoji.
+	 *
+	 * @param string $country_code ISO 2-letter code.
+	 * @return string Flag emoji or empty string.
+	 */
+	public static function country_code_to_flag( $country_code ) {
+		$code = strtoupper( trim( (string) $country_code ) );
+		if ( strlen( $code ) !== 2 ) {
+			return '';
+		}
+		$chr_a = ord( 'A' );
+		$first = ord( $code[0] ) - $chr_a + 0x1F1E6;
+		$second = ord( $code[1] ) - $chr_a + 0x1F1E6;
+		return html_entity_decode( '&#x' . dechex( $first ) . ';&#x' . dechex( $second ) . ';', ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Enqueue the WordPress media uploader scripts for term edit pages.
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function enqueue_term_assets( $hook ) {
+		global $current_screen;
+		if ( 'edit-tags.php' === $hook || 'term.php' === $hook ) {
+			if ( $current_screen && 'store_brand' === $current_screen->taxonomy ) {
+				wp_enqueue_media();
+				wp_add_inline_script(
+					'jquery',
+					"jQuery(document).ready(function($) {
+						function setupUploader(buttonId, inputId, previewId) {
+							$('body').on('click', buttonId, function(e) {
+								e.preventDefault();
+								var button = $(this);
+								var custom_uploader = wp.media({
+									title: '" . esc_js( __( 'Choose Brand Logo', 'aseer-store-locator' ) ) . "',
+									layout: 'select',
+									button: { text: '" . esc_js( __( 'Use Image', 'aseer-store-locator' ) ) . "' },
+									multiple: false
+								}).on('select', function() {
+									var attachment = custom_uploader.state().get('selection').first().toJSON();
+									$(inputId).val(attachment.id);
+									$(previewId).html('<img src=\"' + attachment.url + '\" style=\"max-width:150px;max-height:100px;display:block;margin-top:10px;\" />');
+								}).open();
+							});
+							$('body').on('click', buttonId + '-clear', function(e) {
+								e.preventDefault();
+								$(inputId).val('');
+								$(previewId).html('');
+							});
+						}
+						setupUploader('#asl_upload_thumbnail_btn', '#asl_brand_thumbnail_id', '#asl_brand_thumbnail_preview');
+						setupUploader('#asl_upload_icon_btn', '#asl_brand_icon_id', '#asl_brand_icon_preview');
+					});"
+				);
+			}
+		}
+	}
+
+	/**
+	 * Render fields on the Add New Brand screen.
+	 *
+	 * @return void
+	 */
+	public function add_brand_fields() {
+		?>
+		<div class="form-field term-group">
+			<label for="asl_brand_thumbnail_id"><?php esc_html_e( 'Full Brand Logo (Pill Logo)', 'aseer-store-locator' ); ?></label>
+			<input type="hidden" id="asl_brand_thumbnail_id" name="asl_brand_thumbnail_id" value="" />
+			<div id="asl_brand_thumbnail_preview"></div>
+			<p style="margin-top: 5px;">
+				<button type="button" class="button" id="asl_upload_thumbnail_btn"><?php esc_html_e( 'Upload/Choose Image', 'aseer-store-locator' ); ?></button>
+				<button type="button" class="button" id="asl_upload_thumbnail_btn-clear"><?php esc_html_e( 'Clear', 'aseer-store-locator' ); ?></button>
+			</p>
+			<p class="description"><?php esc_html_e( 'Bundled fallback is the full logo (e.g. Aseer Time, Papa Kanafa, Farooj) matching the brand selector pills on top of the locator widget.', 'aseer-store-locator' ); ?></p>
+		</div>
+		<div class="form-field term-group">
+			<label for="asl_brand_icon_id"><?php esc_html_e( 'Icon Brand Logo (Circle Logo)', 'aseer-store-locator' ); ?></label>
+			<input type="hidden" id="asl_brand_icon_id" name="asl_brand_icon_id" value="" />
+			<div id="asl_brand_icon_preview"></div>
+			<p style="margin-top: 5px;">
+				<button type="button" class="button" id="asl_upload_icon_btn"><?php esc_html_e( 'Upload/Choose Image', 'aseer-store-locator' ); ?></button>
+				<button type="button" class="button" id="asl_upload_icon_btn-clear"><?php esc_html_e( 'Clear', 'aseer-store-locator' ); ?></button>
+			</p>
+			<p class="description"><?php esc_html_e( 'Bundled fallback is the circular logo icon matching the circular emblem on the store card listings.', 'aseer-store-locator' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render fields on the Edit Brand screen.
+	 *
+	 * @param \WP_Term $term Current term object.
+	 * @return void
+	 */
+	public function edit_brand_fields( $term ) {
+		$thumb_id   = get_term_meta( $term->term_id, 'asl_brand_thumbnail_id', true );
+		$thumb_html = '';
+		if ( $thumb_id ) {
+			$thumb_url = wp_get_attachment_url( $thumb_id );
+			if ( $thumb_url ) {
+				$thumb_html = '<img src="' . esc_url( $thumb_url ) . '" style="max-width:150px;max-height:100px;display:block;margin-top:10px;" />';
+			}
+		}
+
+		$icon_id   = get_term_meta( $term->term_id, 'asl_brand_icon_id', true );
+		$icon_html = '';
+		if ( $icon_id ) {
+			$icon_url = wp_get_attachment_url( $icon_id );
+			if ( $icon_url ) {
+				$icon_html = '<img src="' . esc_url( $icon_url ) . '" style="max-width:150px;max-height:100px;display:block;margin-top:10px;" />';
+			}
+		}
+		?>
+		<tr class="form-field term-group-wrap">
+			<th scope="row">
+				<label for="asl_brand_thumbnail_id"><?php esc_html_e( 'Full Brand Logo (Pill Logo)', 'aseer-store-locator' ); ?></label>
+			</th>
+			<td>
+				<input type="hidden" id="asl_brand_thumbnail_id" name="asl_brand_thumbnail_id" value="<?php echo esc_attr( $thumb_id ); ?>" />
+				<div id="asl_brand_thumbnail_preview"><?php echo $thumb_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+				<p style="margin-top: 5px;">
+					<button type="button" class="button" id="asl_upload_thumbnail_btn"><?php esc_html_e( 'Upload/Choose Image', 'aseer-store-locator' ); ?></button>
+					<button type="button" class="button" id="asl_upload_thumbnail_btn-clear"><?php esc_html_e( 'Clear', 'aseer-store-locator' ); ?></button>
+				</p>
+				<p class="description"><?php esc_html_e( 'Bundled fallback is the full logo (e.g. Aseer Time, Papa Kanafa, Farooj) matching the brand selector pills on top of the locator widget.', 'aseer-store-locator' ); ?></p>
+			</td>
+		</tr>
+		<tr class="form-field term-group-wrap">
+			<th scope="row">
+				<label for="asl_brand_icon_id"><?php esc_html_e( 'Icon Brand Logo (Circle Logo)', 'aseer-store-locator' ); ?></label>
+			</th>
+			<td>
+				<input type="hidden" id="asl_brand_icon_id" name="asl_brand_icon_id" value="<?php echo esc_attr( $icon_id ); ?>" />
+				<div id="asl_brand_icon_preview"><?php echo $icon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+				<p style="margin-top: 5px;">
+					<button type="button" class="button" id="asl_upload_icon_btn"><?php esc_html_e( 'Upload/Choose Image', 'aseer-store-locator' ); ?></button>
+					<button type="button" class="button" id="asl_upload_icon_btn-clear"><?php esc_html_e( 'Clear', 'aseer-store-locator' ); ?></button>
+				</p>
+				<p class="description"><?php esc_html_e( 'Bundled fallback is the circular logo icon matching the circular emblem on the store card listings.', 'aseer-store-locator' ); ?></p>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Save term meta fields when created or edited.
+	 *
+	 * @param int $term_id Term ID.
+	 * @return void
+	 */
+	public function save_brand_fields( $term_id ) {
+		if ( isset( $_POST['asl_brand_thumbnail_id'] ) ) {
+			$thumb_id = sanitize_text_field( wp_unslash( $_POST['asl_brand_thumbnail_id'] ) );
+			update_term_meta( $term_id, 'asl_brand_thumbnail_id', $thumb_id );
+		}
+		if ( isset( $_POST['asl_brand_icon_id'] ) ) {
+			$icon_id = sanitize_text_field( wp_unslash( $_POST['asl_brand_icon_id'] ) );
+			update_term_meta( $term_id, 'asl_brand_icon_id', $icon_id );
 		}
 	}
 }

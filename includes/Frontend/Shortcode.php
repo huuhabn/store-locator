@@ -40,6 +40,7 @@ class Shortcode {
 				// rather than silently overriding them with a hardcoded '4'.
 				'default_zoom'   => '',
 				'default_center' => '',
+				'default_brand'  => '',
 				'show_hero'      => '1',
 				'hero_title'     => '',
 				'hero_subtitle'  => '',
