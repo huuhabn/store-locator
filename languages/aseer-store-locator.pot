@@ -1,0 +1,188 @@
+# Copyright (C) 2024 Aseer Time Group
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Aseer Store Locator 1.0.0\n"
+"Report-Msgid-Bugs-To: https://example.com/support\n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: includes/Frontend/Assets.php
+msgid "No stores found matching your criteria."
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Open"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Closed"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Directions"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Store Details"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Use My Location"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Locating…"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Could not access your location."
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "stores found"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "No stores found."
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Map"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "List"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "km away"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Filter by"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Clear Filters"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Searching…"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Map failed to load."
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Find Store"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "Open Map"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "View Map"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "All Brands"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+msgid "All Countries"
+msgstr ""
+
+#: includes/Frontend/Assets.php
+#. translators: %1$s = count, %2$s = brand name, %3$s = country name.
+msgid "%1$s Store Found for %2$s in %3$s"
+msgstr ""
+
+#: templates/locator.php
+msgid "Find a Store"
+msgstr ""
+
+#: templates/locator.php
+msgid "Search Aseer Time Group branches worldwide. Find your nearest location, explore our brands, and plan your visit."
+msgstr ""
+
+#: templates/locator.php
+msgid "All Countries"
+msgstr ""
+
+#: templates/locator.php
+msgid "All Brands"
+msgstr ""
+
+#: templates/locator.php
+msgid "Find Store"
+msgstr ""
+
+#: templates/locator.php
+msgid "Filter by brand"
+msgstr ""
+
+#: templates/locator.php
+msgid "Loading stores…"
+msgstr ""
+
+#: templates/locator.php
+msgid "View Map"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Store Locator"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Hero"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Show Hero"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Yes"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "No"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Title"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Subtitle"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Map"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Map Height"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Default Zoom"
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Leave empty to use the value from Store Locator → Settings."
+msgstr ""
+
+#: includes/Elementor/Widgets/StoreLocatorWidget.php
+msgid "Default Center (lat,lng)"
+msgstr ""

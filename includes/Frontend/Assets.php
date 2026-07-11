@@ -8,6 +8,7 @@
 namespace Aseer\StoreLocator\Frontend;
 
 use Aseer\StoreLocator\Admin\Settings;
+use Aseer\StoreLocator\Frontend\BrandLogos;
 use Aseer\StoreLocator\PostTypes\StorePostType;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -39,8 +40,17 @@ class Assets {
 	 * @return void
 	 */
 	public function register() {
+		// Frontend: register + conditionally enqueue on public pages.
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ) );
 		add_action( 'wp_footer', array( $this, 'maybe_enqueue_late' ), 1 );
+
+		// Elementor editor context: the editor admin page and its preview
+		// iframe both need the handles registered so that the widget's
+		// get_script_depends() / get_style_depends() declarations resolve
+		// correctly. Without this, Elementor silently skips unrecognised
+		// handles and the widget loads unstyled / without JS.
+		add_action( 'elementor/editor/before_enqueue_scripts', array( $this, 'register_assets' ) );
+		add_action( 'elementor/preview/enqueue_styles', array( $this, 'register_assets' ) );
 	}
 
 	/**
@@ -49,6 +59,20 @@ class Assets {
 	 * @return void
 	 */
 	public function register_assets() {
+		// Guard: wp_register_* calls are idempotent in WP core, but we also
+		// call wp_localize_script here which appends data on each call. The
+		// static flag prevents double-localisation when this method is invoked
+		// from both wp_enqueue_scripts and the Elementor editor hooks.
+		static $registered = false;
+		if ( $registered ) {
+			// If already registered, still allow conditional enqueue checks.
+			if ( $this->should_enqueue() ) {
+				$this->enqueue( Settings::get() );
+			}
+			return;
+		}
+		$registered = true;
+
 		$settings = Settings::get();
 
 		// Google Maps requires an API key to actually load; if it's selected
@@ -127,6 +151,21 @@ class Assets {
 			? array()
 			: array( 'leaflet', 'leaflet-markercluster', 'leaflet-markercluster-default' );
 
+		// ---- Typography (Figma) ----
+		// Always enqueue Barlow Condensed (EN/ES). When the page is
+		// Arabic (RTL) also load Tajawal and apply the font override.
+		$font_families = array( 'Barlow+Condensed:wght@400;500;700' );
+		if ( is_rtl() ) {
+			$font_families[] = 'Tajawal:wght@400;500;700';
+		}
+		$font_url = 'https://fonts.googleapis.com/css2?family=' . implode( '&family=', $font_families ) . '&display=swap';
+		wp_register_style(
+			'asl-google-fonts',
+			$font_url,
+			array(),
+			null
+		);
+
 		// Plugin assets.
 		wp_register_style(
 			'aseer-store-locator',
@@ -181,8 +220,16 @@ class Assets {
 				'clearFilters'   => __( 'Clear Filters', 'aseer-store-locator' ),
 				'searching'      => __( 'Searching…', 'aseer-store-locator' ),
 				'mapLoadError'   => __( 'Map failed to load.', 'aseer-store-locator' ),
+				// Figma UI strings.
+				'findStore'      => __( 'Find Store', 'aseer-store-locator' ),
+				'openMap'        => __( 'Open Map', 'aseer-store-locator' ),
+				'viewMap'        => __( 'View Map', 'aseer-store-locator' ),
+				'allBrands'      => __( 'All Brands', 'aseer-store-locator' ),
+				'allCountries'   => __( 'All Countries', 'aseer-store-locator' ),
+				// translators: %1$s = count, %2$s = brand name, %3$s = country name.
+				'resultsSummary' => __( '%1$s Store Found for %2$s in %3$s', 'aseer-store-locator' ),
 			),
-			'settings'   => array(
+			'settings'      => array(
 				'mapProvider'     => $provider,
 				'markerColor'     => $settings['marker_color'],
 				'markerIconUrl'   => $settings['marker_icon_url'],
@@ -195,6 +242,9 @@ class Assets {
 				),
 				'defaultZoom'     => (int) $settings['default_zoom'],
 			),
+			// Static fallback brand logo maps populated before REST /filters loads.
+			'brandLogos'     => BrandLogos::static_icon_map(),
+			'brandLogosFull' => BrandLogos::static_full_map(),
 		);
 
 		// Localized onto BOTH script handles (not just the widget's), since
@@ -277,7 +327,7 @@ class Assets {
 		// equivalent "print footer styles" pass in core. A style enqueued
 		// this late would otherwise silently never reach the page, leaving
 		// the widget rendered but completely unstyled. Force it out here.
-		wp_print_styles( array( 'aseer-store-locator' ) );
+		wp_print_styles( array( 'asl-google-fonts', 'aseer-store-locator' ) );
 	}
 
 	/**
@@ -300,9 +350,11 @@ class Assets {
 	 * @return void
 	 */
 	private function enqueue( $settings ) {
+		wp_enqueue_style( 'asl-google-fonts' );
 		wp_enqueue_style( 'aseer-store-locator' );
 		wp_enqueue_script( 'aseer-store-locator' );
 		$this->apply_color_overrides( $settings );
+		$this->apply_font_overrides();
 	}
 
 	/**
@@ -328,6 +380,20 @@ class Assets {
 				esc_attr( $settings['panel_color'] )
 			)
 		);
+	}
+
+	/**
+	 * Apply Tajawal font override when the page locale is RTL.
+	 *
+	 * @return void
+	 */
+	private function apply_font_overrides() {
+		if ( is_rtl() ) {
+			wp_add_inline_style(
+				'aseer-store-locator',
+				'[dir="rtl"] .asl-locator { --asl-font: "Tajawal", sans-serif; }'
+			);
+		}
 	}
 
 	/**
@@ -374,8 +440,14 @@ class Assets {
 		// there. A cheap substring check on the raw meta (no need to fully
 		// decode the JSON) catches that case on normal frontend views of an
 		// Elementor page (as opposed to the editor preview, handled above).
+		// Also detect the native Elementor widget slug ('asl-store-locator')
+		// alongside the shortcode text, to handle pages where the widget
+		// was placed directly rather than via a Shortcode widget.
 		$elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
-		if ( is_string( $elementor_data ) && false !== strpos( $elementor_data, 'store_locator' ) ) {
+		if ( is_string( $elementor_data ) && (
+			false !== strpos( $elementor_data, 'store_locator' ) ||
+			false !== strpos( $elementor_data, 'asl-store-locator' )
+		) ) {
 			return true;
 		}
 

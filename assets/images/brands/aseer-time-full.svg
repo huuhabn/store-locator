@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none" aria-hidden="true">
+  <!-- Star / juice-drop icon -->
+  <circle cx="20" cy="20" r="16" fill="#AF202B"/>
+  <path fill="#F7941D" d="M20 6l2.8 8.6H32l-7.4 5.4 2.8 8.6L20 23.2l-7.4 5.4 2.8-8.6L8 14.6h9.2L20 6z"/>
+  <!-- Wordmark -->
+  <text x="44" y="16" fill="#AF202B" font-family="'Barlow Condensed',Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="1">ASEER</text>
+  <text x="44" y="30" fill="#212121" font-family="'Barlow Condensed',Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="1">TIME</text>
+</svg>

@@ -1,0 +1,134 @@
+# Arabic translation for Aseer Store Locator
+# Copyright (C) 2024 Aseer Time Group
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Aseer Store Locator 1.0.0\n"
+"Report-Msgid-Bugs-To: https://example.com/support\n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: 2024-01-01 00:00+0000\n"
+"Last-Translator: Aseer Time Group\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "No stores found matching your criteria."
+msgstr "لا توجد متاجر تطابق معاييرك."
+
+msgid "Open"
+msgstr "مفتوح"
+
+msgid "Closed"
+msgstr "مغلق"
+
+msgid "Directions"
+msgstr "الاتجاهات"
+
+msgid "Store Details"
+msgstr "تفاصيل المتجر"
+
+msgid "Use My Location"
+msgstr "استخدام موقعي"
+
+msgid "Locating…"
+msgstr "جارٍ التحديد…"
+
+msgid "Could not access your location."
+msgstr "تعذّر الوصول إلى موقعك."
+
+msgid "stores found"
+msgstr "متاجر موجودة"
+
+msgid "No stores found."
+msgstr "لا توجد متاجر."
+
+msgid "Map"
+msgstr "خريطة"
+
+msgid "List"
+msgstr "قائمة"
+
+msgid "km away"
+msgstr "كم"
+
+msgid "Filter by"
+msgstr "تصفية حسب"
+
+msgid "Clear Filters"
+msgstr "مسح التصفية"
+
+msgid "Searching…"
+msgstr "جارٍ البحث…"
+
+msgid "Map failed to load."
+msgstr "فشل تحميل الخريطة."
+
+msgid "Find Store"
+msgstr "ابحث عن متجر"
+
+msgid "Open Map"
+msgstr "توجه للخريطة"
+
+msgid "View Map"
+msgstr "عرض الخريطة"
+
+msgid "All Brands"
+msgstr "كل العلامات التجارية"
+
+msgid "All Countries"
+msgstr "كل البلدان"
+
+#. translators: %1$s = count, %2$s = brand name, %3$s = country name.
+msgid "%1$s Store Found for %2$s in %3$s"
+msgstr "تم العثور على %1$s متجر لـ %2$s في %3$s"
+
+msgid "Find a Store"
+msgstr "ابحث عن متجر"
+
+msgid "Search Aseer Time Group branches worldwide. Find your nearest location, explore our brands, and plan your visit."
+msgstr "ابحث عن فروع مجموعة عصير تايم حول العالم. اعثر على أقرب موقع لك، واستكشف علاماتنا التجارية، وخطّط لزيارتك."
+
+msgid "Filter by brand"
+msgstr "تصفية حسب العلامة التجارية"
+
+msgid "Loading stores…"
+msgstr "جارٍ تحميل المتاجر…"
+
+msgid "View Map"
+msgstr "عرض الخريطة"
+
+msgid "Store Locator"
+msgstr "محدد المتاجر"
+
+msgid "Hero"
+msgstr "رأس الصفحة"
+
+msgid "Show Hero"
+msgstr "إظهار رأس الصفحة"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "No"
+msgstr "لا"
+
+msgid "Title"
+msgstr "العنوان"
+
+msgid "Subtitle"
+msgstr "العنوان الفرعي"
+
+msgid "Map Height"
+msgstr "ارتفاع الخريطة"
+
+msgid "Default Zoom"
+msgstr "التكبير الافتراضي"
+
+msgid "Leave empty to use the value from Store Locator → Settings."
+msgstr "اتركه فارغاً لاستخدام القيمة من محدد المتاجر ← الإعدادات."
+
+msgid "Default Center (lat,lng)"
+msgstr "المركز الافتراضي (خط عرض، خط طول)"

@@ -11,6 +11,7 @@ use Aseer\StoreLocator\PostTypes\StorePostType;
 use Aseer\StoreLocator\Admin\MetaBoxes;
 use Aseer\StoreLocator\Admin\Import;
 use Aseer\StoreLocator\Admin\Settings;
+use Aseer\StoreLocator\Elementor\ElementorIntegration;
 use Aseer\StoreLocator\Frontend\Shortcode;
 use Aseer\StoreLocator\Frontend\Assets;
 use Aseer\StoreLocator\Frontend\TemplateLoader;
@@ -78,6 +79,9 @@ final class Plugin {
 
 		// REST API endpoints.
 		( new StoreController() )->register();
+
+		// Elementor widget (no-op when Elementor is inactive).
+		( new ElementorIntegration() )->register();
 	}
 
 	/**

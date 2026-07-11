@@ -34,12 +34,16 @@ class Shortcode {
 	public function render( $atts ) {
 		$atts = shortcode_atts(
 			array(
-				'height'         => '650px',
+				'height'         => '689px',
 				// Left empty on purpose: an empty value tells the frontend JS to
 				// fall back to the site-wide defaults set on the Settings page,
 				// rather than silently overriding them with a hardcoded '4'.
 				'default_zoom'   => '',
 				'default_center' => '',
+				'show_hero'      => '1',
+				'hero_title'     => '',
+				'hero_subtitle'  => '',
+				'instance_id'    => 'asl-locator',
 			),
 			$atts,
 			'store_locator'

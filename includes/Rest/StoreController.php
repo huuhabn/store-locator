@@ -7,6 +7,7 @@
 
 namespace Aseer\StoreLocator\Rest;
 
+use Aseer\StoreLocator\Frontend\BrandLogos;
 use Aseer\StoreLocator\PostTypes\StorePostType;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -226,12 +227,16 @@ class StoreController {
 		}
 		sort( $services );
 
+		$brands = $get_distinct( '_asl_brand' );
+
 		return new WP_REST_Response(
 			array(
-				'brands'    => $get_distinct( '_asl_brand' ),
-				'countries' => $get_distinct( '_asl_country' ),
-				'cities'    => $get_distinct( '_asl_city' ),
-				'services'  => $services,
+				'brands'          => $brands,
+				'countries'       => $get_distinct( '_asl_country' ),
+				'cities'          => $get_distinct( '_asl_city' ),
+				'services'        => $services,
+				'brandLogos'      => BrandLogos::map_for_brands( $brands ),
+				'brandLogosFull'  => BrandLogos::map_full_for_brands( $brands ),
 			)
 		);
 	}
