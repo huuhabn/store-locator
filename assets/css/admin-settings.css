@@ -1,0 +1,45 @@
+/**
+ * Aseer Store Locator — admin Settings page styles.
+ * Scoped to the Settings screen only (enqueued conditionally by Settings.php).
+ */
+
+.asl-media-field {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+}
+
+.asl-media-field__preview {
+	width: 60px;
+	height: 60px;
+	flex: 0 0 auto;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.asl-media-field__preview img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+.asl-media-field__controls {
+	flex: 1;
+	min-width: 260px;
+}
+
+.asl-media-field__controls .regular-text {
+	width: 100%;
+	max-width: 400px;
+	margin-bottom: 8px;
+}
+
+.asl-media-field__buttons {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}

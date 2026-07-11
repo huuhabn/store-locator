@@ -1,0 +1,818 @@
+/* =========================================================
+   Aseer Store Locator — Frontend Styles
+   All colors/spacing use CSS variables so the host theme
+   (or the plugin's Settings page) can override branding
+   without editing this file.
+   ========================================================= */
+
+.asl-locator {
+	/* ---- Themeable variables (overridden inline by Settings::get()) ---- */
+	--asl-color-primary: var(--e-global-color-primary, #111111);
+	--asl-color-primary-contrast: #ffffff;
+	--asl-color-panel: #fbe9ea;
+	--asl-color-text: var(--e-global-color-text, #222222);
+	--asl-color-muted: #6b6b6b;
+	--asl-color-border: #e2e2e2;
+	--asl-color-bg: #ffffff;
+	--asl-color-bg-alt: #f7f7f7;
+	--asl-color-open: #1e8e3e;
+	--asl-color-closed: #c5221f;
+	--asl-radius: 6px;
+	--asl-font: inherit;
+	--asl-map-height: 650px;
+
+	font-family: var(--asl-font);
+	color: var(--asl-color-text);
+	display: grid;
+	grid-template-columns: 380px 1fr;
+	gap: 0;
+	border: 1px solid var(--asl-color-border);
+	border-radius: var(--asl-radius);
+	overflow: hidden;
+	background: var(--asl-color-bg);
+	box-sizing: border-box;
+}
+
+.asl-locator *,
+.asl-locator *::before,
+.asl-locator *::after {
+	box-sizing: inherit;
+}
+
+/* ---------------- Sidebar ---------------- */
+
+.asl-locator__sidebar {
+	display: flex;
+	flex-direction: column;
+	background: var(--asl-color-bg);
+	border-right: 1px solid var(--asl-color-border);
+	max-height: var(--asl-map-height);
+}
+
+/* ---------------- Search panel ---------------- */
+
+.asl-locator__search {
+	position: relative;
+	padding: 16px;
+	background: var(--asl-color-panel);
+	border-bottom: 1px solid var(--asl-color-border);
+}
+
+.asl-search__title {
+	margin: 0 0 10px;
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--asl-color-text);
+}
+
+.asl-search__box {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--asl-color-bg);
+	border: 1px solid var(--asl-color-border);
+	border-radius: var(--asl-radius);
+	padding: 0 4px;
+}
+
+.asl-search__box:focus-within {
+	outline: 2px solid var(--asl-color-primary);
+	outline-offset: 1px;
+}
+
+.asl-search__box .asl-input {
+	flex: 1;
+	border: none;
+	padding: 10px 6px;
+	background: transparent;
+}
+
+.asl-locator .asl-search__box .asl-input:focus {
+	outline: none;
+}
+
+/* Scoped under .asl-locator (not just the bare class) so these consistently
+   beat a theme's own global `input`/`select`/`button` resets, which are a
+   common source of the plugin's form controls losing their styling. */
+.asl-locator input.asl-input,
+.asl-locator select.asl-select {
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+	padding: 10px 12px;
+	font-size: 14px;
+	font-family: inherit;
+	line-height: 1.3;
+	color: var(--asl-color-text);
+	border: 1px solid var(--asl-color-border);
+	border-radius: var(--asl-radius);
+	background: var(--asl-color-bg);
+	box-shadow: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+.asl-locator input.asl-input{
+	border: none;
+}
+.asl-locator select.asl-select:focus {
+	outline: 2px solid var(--asl-color-primary);
+	outline-offset: 1px;
+}
+
+/* Search box icon buttons (location arrow + magnifier), drawn with
+   CSS mask-image so they inherit --asl-color-text via background-color. */
+.asl-locator button.asl-search__icon-btn {
+	flex: 0 0 auto;
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	box-shadow: none;
+	text-decoration: none;
+	cursor: pointer;
+	position: relative;
+	border-radius: 50%;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.asl-locator button.asl-search__icon-btn:hover {
+	background: var(--asl-color-bg-alt);
+}
+
+.asl-locator button.asl-search__icon-btn::before {
+	content: "";
+	position: absolute;
+	inset: 7px;
+	background-color: var(--asl-color-text);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+}
+
+.asl-locator .asl-icon-locate::before {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L19 21 L12 17 L5 21 Z'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L19 21 L12 17 L5 21 Z'/%3E%3C/svg%3E");
+}
+
+.asl-locator .asl-icon-search::before {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='10' cy='10' r='6.5' fill='none' stroke='%23000' stroke-width='2.2'/%3E%3Cline x1='15' y1='15' x2='20.5' y2='20.5' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='10' cy='10' r='6.5' fill='none' stroke='%23000' stroke-width='2.2'/%3E%3Cline x1='15' y1='15' x2='20.5' y2='20.5' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.asl-locator button.asl-search__icon-btn.is-loading::before {
+	animation: asl-spin 0.8s linear infinite;
+}
+
+@keyframes asl-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+/* ---------------- Autocomplete dropdown ---------------- */
+
+.asl-autocomplete {
+	list-style: none;
+	margin: 6px 0 0;
+	padding: 4px 0;
+	position: relative;
+	background: var(--asl-color-bg);
+	border: 1px solid var(--asl-color-border);
+	border-radius: var(--asl-radius);
+	max-height: 240px;
+	overflow-y: auto;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.asl-autocomplete[hidden] {
+	display: none;
+}
+
+.asl-autocomplete li {
+	padding: 10px 14px;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.asl-autocomplete li:hover,
+.asl-autocomplete li.is-active {
+	background: var(--asl-color-bg-alt);
+}
+
+.asl-autocomplete li.asl-autocomplete__empty {
+	color: var(--asl-color-muted);
+	cursor: default;
+}
+
+.asl-autocomplete li.asl-autocomplete__empty:hover {
+	background: transparent;
+}
+
+/* ---------------- Results bar + filter toggle ---------------- */
+
+.asl-locator__resultsbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 16px;
+	background: var(--asl-color-panel);
+	border-bottom: 1px solid var(--asl-color-border);
+}
+
+.asl-locator__count {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--asl-color-text);
+}
+
+.asl-locator button.asl-filter-toggle {
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	box-shadow: none;
+	cursor: pointer;
+	position: relative;
+	border-radius: 50%;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.asl-locator button.asl-filter-toggle:hover,
+.asl-locator button.asl-filter-toggle[aria-expanded="true"] {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.asl-icon-sliders::before {
+	content: "";
+	position: absolute;
+	inset: 6px;
+	background-color: var(--asl-color-text);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='3' y1='6' x2='21' y2='6' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='9' cy='6' r='2.4' fill='%23000'/%3E%3Cline x1='3' y1='12' x2='21' y2='12' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='15' cy='12' r='2.4' fill='%23000'/%3E%3Cline x1='3' y1='18' x2='21' y2='18' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='7' cy='18' r='2.4' fill='%23000'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='3' y1='6' x2='21' y2='6' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='9' cy='6' r='2.4' fill='%23000'/%3E%3Cline x1='3' y1='12' x2='21' y2='12' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='15' cy='12' r='2.4' fill='%23000'/%3E%3Cline x1='3' y1='18' x2='21' y2='18' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='7' cy='18' r='2.4' fill='%23000'/%3E%3C/svg%3E");
+}
+
+/* ---------------- Filter panel ---------------- */
+
+.asl-locator__filters {
+	background: var(--asl-color-panel);
+	border-bottom: 1px solid var(--asl-color-border);
+	padding: 14px 16px 18px;
+}
+
+.asl-locator__filters[hidden] {
+	display: none;
+}
+
+.asl-filters__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 13px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	margin-bottom: 12px;
+}
+
+.asl-locator button.asl-filters__close {
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	font-size: 20px;
+	font-family: inherit;
+	line-height: 1;
+	box-shadow: none;
+	cursor: pointer;
+	color: var(--asl-color-text);
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.asl-filter-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.asl-filter label {
+	display: block;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--asl-color-muted);
+	margin-bottom: 4px;
+}
+
+.asl-filter-group {
+	margin-bottom: 14px;
+}
+
+.asl-filter-group__title {
+	display: block;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--asl-color-muted);
+	margin-bottom: 6px;
+}
+
+.asl-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 0;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.asl-locator .asl-checkbox input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--asl-color-primary);
+	cursor: pointer;
+}
+
+.asl-filters__actions {
+	margin-top: 6px;
+}
+
+/* ---------------- Buttons ----------------
+   Used on both <a> (Directions) and <button> (Store Details, Clear Filters)
+   elements, so both tags are qualified here. Scoping every rule under
+   .asl-locator, plus resetting the properties themes most commonly set
+   globally on `a`/`button` (text-decoration, box-shadow, border-radius,
+   font), is what keeps the plugin's buttons from getting silently
+   reskinned by the active theme's own link/button styles. */
+
+.asl-locator a.asl-btn,
+.asl-locator button.asl-btn {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 0;
+	padding: 11px 14px;
+	font-size: 12px;
+	font-family: inherit;
+	font-weight: 700;
+	line-height: 1.2;
+	text-transform: uppercase;
+	text-decoration: none;
+	letter-spacing: 0.04em;
+	border-radius: var(--asl-radius);
+	border: 1px solid var(--asl-color-primary);
+	background: var(--asl-color-primary);
+	color: var(--asl-color-primary-contrast);
+	box-shadow: none;
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.asl-locator a.asl-btn:hover,
+.asl-locator button.asl-btn:hover {
+	opacity: 0.85;
+	color: var(--asl-color-primary-contrast);
+	text-decoration: none;
+}
+
+.asl-locator button.asl-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.asl-locator a.asl-btn.asl-btn--outline,
+.asl-locator button.asl-btn.asl-btn--outline {
+	background: transparent;
+	color: var(--asl-color-primary);
+}
+
+.asl-locator a.asl-btn.asl-btn--outline:hover,
+.asl-locator button.asl-btn.asl-btn--outline:hover {
+	color: var(--asl-color-primary);
+}
+
+.asl-locator a.asl-btn.asl-btn--small,
+.asl-locator button.asl-btn.asl-btn--small {
+	padding: 9px 10px;
+	font-size: 11px;
+}
+
+.asl-locator__count-empty {
+	color: var(--asl-color-muted);
+}
+
+.asl-locator__list {
+	overflow-y: auto;
+	flex: 1;
+	padding: 8px;
+}
+
+/* ---------------- Slim scrollbars ----------------
+   Applied to every scrollable region in the widget (the store list,
+   the autocomplete dropdown, and the details modal) so they all get a
+   thin, unobtrusive scrollbar instead of the browser's bulky default. */
+
+.asl-locator__list,
+.asl-autocomplete,
+.asl-modal__panel {
+	/* Firefox */
+	scrollbar-width: thin;
+	scrollbar-color: var(--asl-color-border) transparent;
+}
+
+.asl-locator__list::-webkit-scrollbar,
+.asl-autocomplete::-webkit-scrollbar,
+.asl-modal__panel::-webkit-scrollbar {
+	width: 6px;
+}
+
+.asl-locator__list::-webkit-scrollbar-track,
+.asl-autocomplete::-webkit-scrollbar-track,
+.asl-modal__panel::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.asl-locator__list::-webkit-scrollbar-thumb,
+.asl-autocomplete::-webkit-scrollbar-thumb,
+.asl-modal__panel::-webkit-scrollbar-thumb {
+	background-color: var(--asl-color-border);
+	border-radius: 999px;
+}
+
+.asl-locator__list::-webkit-scrollbar-thumb:hover,
+.asl-autocomplete::-webkit-scrollbar-thumb:hover,
+.asl-modal__panel::-webkit-scrollbar-thumb:hover {
+	background-color: var(--asl-color-muted);
+}
+
+.asl-loading,
+.asl-empty {
+	padding: 24px 16px;
+	text-align: center;
+	color: var(--asl-color-muted);
+	font-size: 14px;
+}
+
+/* ---------------- Store Card ---------------- */
+
+.asl-card {
+	border: 1px solid var(--asl-color-border);
+	border-radius: var(--asl-radius);
+	padding: 14px;
+	margin-bottom: 8px;
+	cursor: pointer;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.asl-card:hover,
+.asl-card.is-active {
+	border-color: var(--asl-color-primary);
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+}
+
+.asl-card__top {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.asl-card__name {
+	font-size: 15px;
+	font-weight: 700;
+	margin: 0;
+}
+
+.asl-card__brand {
+	font-size: 12px;
+	color: var(--asl-color-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.asl-card__distance {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: var(--asl-color-muted);
+	white-space: nowrap;
+	flex: 0 0 auto;
+}
+
+.asl-card__distance::before {
+	content: "";
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	background-color: var(--asl-color-muted);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z'/%3E%3C/svg%3E");
+}
+
+.asl-card__status-row {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin: 2px 0 6px;
+}
+
+.asl-status {
+	font-size: 11px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.asl-status--open {
+	color: var(--asl-color-open);
+}
+
+.asl-status--closed {
+	color: var(--asl-color-closed);
+}
+
+.asl-locator button.asl-hours-toggle {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	box-shadow: none;
+	cursor: pointer;
+	position: relative;
+	flex: 0 0 auto;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.asl-hours-toggle::before {
+	content: "";
+	position: absolute;
+	inset: 4px;
+	background-color: var(--asl-color-muted);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	transition: transform 0.15s ease;
+}
+
+.asl-hours-toggle.is-open::before {
+	transform: rotate(180deg);
+}
+
+.asl-card__hours {
+	font-size: 12px;
+	color: var(--asl-color-muted);
+	white-space: pre-line;
+	margin: 0 0 8px;
+	padding: 8px 10px;
+	background: var(--asl-color-bg-alt);
+	border-radius: var(--asl-radius);
+}
+
+.asl-card__hours[hidden] {
+	display: none;
+}
+
+.asl-card__address {
+	font-size: 13px;
+	color: var(--asl-color-text);
+	margin: 4px 0;
+}
+
+.asl-card__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	font-size: 12px;
+	color: var(--asl-color-muted);
+	margin: 6px 0;
+}
+
+.asl-card__tag-row {
+	margin: 8px 0 0;
+}
+
+.asl-card__tag-label {
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--asl-color-text);
+	margin-right: 4px;
+}
+
+.asl-card__services {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	vertical-align: middle;
+}
+
+.asl-chip {
+	font-size: 11px;
+	padding: 3px 8px;
+	border-radius: 999px;
+	background: var(--asl-color-bg-alt);
+	color: var(--asl-color-text);
+	border: 1px solid var(--asl-color-border);
+}
+
+.asl-card__actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.asl-card__actions .asl-btn {
+	flex: 1;
+}
+
+/* ---------------- Map ---------------- */
+
+.asl-locator__map-wrap {
+	position: relative;
+}
+
+.asl-locator__map {
+	width: 100%;
+	height: var(--asl-map-height);
+}
+
+.asl-map-error {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 24px;
+	text-align: center;
+	color: var(--asl-color-muted);
+	background: var(--asl-color-bg-alt);
+	font-size: 14px;
+}
+
+.asl-locator__mobile-toggle {
+	display: none;
+}
+
+/* Leaflet popup content */
+.asl-popup h4 {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+.asl-popup p {
+	margin: 2px 0;
+	font-size: 12px;
+}
+
+/* ---------------- Modal (Store Details) ---------------- */
+
+.asl-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: none;
+}
+
+.asl-modal.is-open {
+	display: block;
+}
+
+.asl-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.asl-modal__panel {
+	position: relative;
+	max-width: 480px;
+	margin: 8vh auto;
+	background: var(--asl-color-bg);
+	border-radius: var(--asl-radius);
+	padding: 24px;
+	max-height: 80vh;
+	overflow-y: auto;
+}
+
+.asl-locator button.asl-modal__close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	font-size: 22px;
+	font-family: inherit;
+	line-height: 1;
+	box-shadow: none;
+	cursor: pointer;
+	color: var(--asl-color-muted);
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 782px) {
+	.asl-locator {
+		grid-template-columns: 1fr;
+	}
+
+	.asl-locator__sidebar {
+		max-height: none;
+		border-right: none;
+		border-bottom: 1px solid var(--asl-color-border);
+		order: 2;
+	}
+
+	.asl-locator__map-wrap {
+		order: 1;
+	}
+
+	.asl-filter-row {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.asl-locator__mobile-toggle {
+		display: flex;
+		border-bottom: 1px solid var(--asl-color-border);
+	}
+
+	.asl-locator button.asl-toggle-btn {
+		flex: 1;
+		margin: 0;
+		padding: 10px;
+		border: none;
+		background: var(--asl-color-bg-alt);
+		color: var(--asl-color-text);
+		font-family: inherit;
+		font-weight: 600;
+		font-size: 13px;
+		box-shadow: none;
+		cursor: pointer;
+		-webkit-appearance: none;
+		appearance: none;
+	}
+
+	.asl-locator button.asl-toggle-btn.is-active {
+		background: var(--asl-color-primary);
+		color: var(--asl-color-primary-contrast);
+	}
+
+	/* Toggle visibility driven by JS adding .asl-view-map / .asl-view-list on root */
+	.asl-locator.asl-view-map .asl-locator__sidebar {
+		display: none;
+	}
+
+	.asl-locator.asl-view-list .asl-locator__map-wrap {
+		display: none;
+	}
+}
+
+.screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(1px, 1px, 1px, 1px);
+	white-space: nowrap;
+}
