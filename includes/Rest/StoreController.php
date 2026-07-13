@@ -287,6 +287,7 @@ class StoreController {
 				'jordan'               => 'JO',
 				'spain'                => 'ES',
 				'españa'               => 'ES',
+				'español'              => 'ES',
 				'united states'        => 'US',
 				'usa'                  => 'US',
 			);
@@ -320,6 +321,7 @@ class StoreController {
 				'jordan'               => 'JO',
 				'spain'                => 'ES',
 				'españa'               => 'ES',
+				'español'              => 'ES',
 				'united states'        => 'US',
 				'usa'                  => 'US',
 			);

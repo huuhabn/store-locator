@@ -61,12 +61,10 @@ class MetaBoxes {
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME );
 
 		$fields = array(
-			'_asl_brand'          => array( __( 'Brand', 'aseer-store-locator' ), 'text' ),
-			'_asl_country'        => array( __( 'Country', 'aseer-store-locator' ), 'text' ),
-			'_asl_city'           => array( __( 'City', 'aseer-store-locator' ), 'text' ),
+			'_asl_brand'          => array( __( 'Brand', 'aseer-store-locator' ), 'select_brand' ),
+			'_asl_country'        => array( __( 'Country', 'aseer-store-locator' ), 'select_country' ),
 			'_asl_address'        => array( __( 'Address', 'aseer-store-locator' ), 'text' ),
-			'_asl_latitude'       => array( __( 'Latitude', 'aseer-store-locator' ), 'text' ),
-			'_asl_longitude'      => array( __( 'Longitude', 'aseer-store-locator' ), 'text' ),
+			'_asl_coordinates'    => array( __( 'Coordinates (Latitude, Longitude)', 'aseer-store-locator' ), 'text' ),
 			'_asl_phone'          => array( __( 'Phone Number', 'aseer-store-locator' ), 'text' ),
 			'_asl_email'          => array( __( 'Email', 'aseer-store-locator' ), 'email' ),
 			'_asl_opening_hours'  => array( __( 'Opening Hours', 'aseer-store-locator' ), 'textarea' ),
@@ -79,7 +77,28 @@ class MetaBoxes {
 
 		foreach ( $fields as $key => $config ) {
 			list( $label, $type ) = $config;
-			$value                = get_post_meta( $post->ID, $key, true );
+
+			if ( '_asl_brand' === $key ) {
+				$brand_terms = wp_get_post_terms( $post->ID, 'store_brand' );
+				if ( ! is_wp_error( $brand_terms ) && ! empty( $brand_terms ) ) {
+					$value = $brand_terms[0]->name;
+				} else {
+					$value = get_post_meta( $post->ID, '_asl_brand', true );
+				}
+			} elseif ( '_asl_country' === $key ) {
+				$country_terms = wp_get_post_terms( $post->ID, 'store_country' );
+				if ( ! is_wp_error( $country_terms ) && ! empty( $country_terms ) ) {
+					$value = $country_terms[0]->name;
+				} else {
+					$value = get_post_meta( $post->ID, '_asl_country', true );
+				}
+			} elseif ( '_asl_coordinates' === $key ) {
+				$latitude  = get_post_meta( $post->ID, '_asl_latitude', true );
+				$longitude = get_post_meta( $post->ID, '_asl_longitude', true );
+				$value     = ( $latitude && $longitude ) ? $latitude . ', ' . $longitude : '';
+			} else {
+				$value = get_post_meta( $post->ID, $key, true );
+			}
 
 			echo '<tr>';
 			echo '<th><label for="' . esc_attr( $key ) . '">' . esc_html( $label ) . '</label></th>';
@@ -97,6 +116,46 @@ class MetaBoxes {
 						'media_buttons' => false,
 					)
 				);
+			} elseif ( 'select_brand' === $type ) {
+				$terms = get_terms(
+					array(
+						'taxonomy'   => 'store_brand',
+						'hide_empty' => false,
+					)
+				);
+				echo '<select class="regular-text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">';
+				echo '<option value="">' . esc_html__( 'Select Brand', 'aseer-store-locator' ) . '</option>';
+				if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+					foreach ( $terms as $term ) {
+						printf(
+							'<option value="%1$s"%2$s>%3$s</option>',
+							esc_attr( $term->name ),
+							selected( $value, $term->name, false ),
+							esc_html( $term->name )
+						);
+					}
+				}
+				echo '</select>';
+			} elseif ( 'select_country' === $type ) {
+				$terms = get_terms(
+					array(
+						'taxonomy'   => 'store_country',
+						'hide_empty' => false,
+					)
+				);
+				echo '<select class="regular-text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">';
+				echo '<option value="">' . esc_html__( 'Select Country', 'aseer-store-locator' ) . '</option>';
+				if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+					foreach ( $terms as $term ) {
+						printf(
+							'<option value="%1$s"%2$s>%3$s</option>',
+							esc_attr( $term->name ),
+							selected( $value, $term->name, false ),
+							esc_html( $term->name )
+						);
+					}
+				}
+				echo '</select>';
 			} else {
 				$input_type = 'email' === $type ? 'email' : 'text';
 				echo '<input class="regular-text" type="' . esc_attr( $input_type ) . '" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" />';
@@ -138,6 +197,17 @@ class MetaBoxes {
 			}
 		}
 
+		// Parse combined coordinates into individual latitude and longitude fields.
+		if ( isset( $_POST['_asl_coordinates'] ) ) {
+			$coords       = sanitize_text_field( wp_unslash( $_POST['_asl_coordinates'] ) );
+			$coords_array = explode( ',', $coords );
+			$lat          = isset( $coords_array[0] ) ? trim( $coords_array[0] ) : '';
+			$lng          = isset( $coords_array[1] ) ? trim( $coords_array[1] ) : '';
+
+			update_post_meta( $post_id, '_asl_latitude', sanitize_text_field( $lat ) );
+			update_post_meta( $post_id, '_asl_longitude', sanitize_text_field( $lng ) );
+		}
+
 		// Synchronize brand meta to store_brand taxonomy term when saving manually.
 		if ( isset( $_POST['_asl_brand'] ) ) {
 			$brand_name = sanitize_text_field( wp_unslash( $_POST['_asl_brand'] ) );
@@ -174,6 +244,8 @@ class MetaBoxes {
 						'egypt'                => 'EG',
 						'jordan'               => 'JO',
 						'spain'                => 'ES',
+						'españa'               => 'ES',
+						'español'              => 'ES',
 					);
 					$norm_name = strtolower( trim( $country_name ) );
 					$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
@@ -212,7 +284,6 @@ class MetaBoxes {
 			if ( 'title' === $key ) {
 				$new['asl_brand']   = __( 'Brand', 'aseer-store-locator' );
 				$new['asl_country'] = __( 'Country', 'aseer-store-locator' );
-				$new['asl_city']    = __( 'City', 'aseer-store-locator' );
 			}
 		}
 		return $new;
@@ -226,11 +297,10 @@ class MetaBoxes {
 	 * @return void
 	 */
 	public function render_column( $column, $post_id ) {
-		if ( in_array( $column, array( 'asl_brand', 'asl_country', 'asl_city' ), true ) ) {
+		if ( in_array( $column, array( 'asl_brand', 'asl_country' ), true ) ) {
 			$map = array(
 				'asl_brand'   => '_asl_brand',
 				'asl_country' => '_asl_country',
-				'asl_city'    => '_asl_city',
 			);
 			echo esc_html( get_post_meta( $post_id, $map[ $column ], true ) );
 		}

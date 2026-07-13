@@ -29,12 +29,10 @@ class Import {
 	 */
 	private $expected_columns = array(
 		'name',
-		'brand',
-		'country',
-		'city',
+		'store_brand',
+		'store_country',
 		'address',
-		'latitude',
-		'longitude',
+		'coordinates',
 		'phone',
 		'opening_hours',
 		'services',
@@ -189,10 +187,8 @@ class Import {
 				'Aseer Time - Downtown',
 				'Aseer Time',
 				'Saudi Arabia',
-				'Riyadh',
 				'King Fahd Road, Riyadh',
-				'24.7136',
-				'46.6753',
+				'24.7136,46.6753',
 				'+966 11 123 4567',
 				'Mon-Sat 10:00-22:00',
 				'Watches, Repairs, Gift Wrapping',
@@ -201,10 +197,8 @@ class Import {
 				'Farooj Abu Alabd - City Mall',
 				'Farooj Abu Alabd',
 				'Saudi Arabia',
-				'Jeddah',
 				'Tahlia Street, Jeddah',
-				'21.5433',
-				'39.1728',
+				'21.5433,39.1728',
 				'+966 12 234 5678',
 				'Sun-Thu 09:00-23:00',
 				'Dine-in, Delivery',
@@ -213,10 +207,8 @@ class Import {
 				'Papa Knafah - Al Khobar',
 				'Papa Knafah',
 				'Saudi Arabia',
-				'Al Khobar',
 				'Prince Turki Street, Al Khobar',
-				'26.2172',
-				'50.1971',
+				'26.2172,50.1971',
 				'+966 13 345 6789',
 				'Daily 12:00-24:00',
 				'Dine-in, Takeaway',
@@ -333,9 +325,11 @@ class Import {
 
 			$data = array_combine( $header, $row );
 
-			$name = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
-			$lat  = isset( $data['latitude'] ) ? floatval( $data['latitude'] ) : null;
-			$lng  = isset( $data['longitude'] ) ? floatval( $data['longitude'] ) : null;
+			$name   = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
+			$coords = isset( $data['coordinates'] ) ? sanitize_text_field( $data['coordinates'] ) : '';
+			$coords_array = explode( ',', $coords );
+			$lat    = isset( $coords_array[0] ) && trim( $coords_array[0] ) !== '' ? floatval( trim( $coords_array[0] ) ) : null;
+			$lng    = isset( $coords_array[1] ) && trim( $coords_array[1] ) !== '' ? floatval( trim( $coords_array[1] ) ) : null;
 
 			// Basic row validation.
 			if ( '' === $name || null === $lat || null === $lng || ! $this->is_valid_coordinate( $lat, $lng ) ) {
@@ -379,10 +373,10 @@ class Import {
 			$meta_map = array(
 				'_asl_brand'         => $brand,
 				'_asl_country'       => $country,
-				'_asl_city'          => isset( $data['city'] ) ? sanitize_text_field( $data['city'] ) : '',
 				'_asl_address'       => isset( $data['address'] ) ? sanitize_text_field( $data['address'] ) : '',
 				'_asl_latitude'      => (string) $lat,
 				'_asl_longitude'     => (string) $lng,
+				'_asl_coordinates'   => (string) $lat . ', ' . (string) $lng,
 				'_asl_phone'         => isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '',
 				'_asl_opening_hours' => isset( $data['opening_hours'] ) ? sanitize_textarea_field( $data['opening_hours'] ) : '',
 				'_asl_services'      => isset( $data['services'] ) ? sanitize_text_field( $data['services'] ) : '',
@@ -420,6 +414,7 @@ class Import {
 						'jordan'               => 'JO',
 						'spain'                => 'ES',
 						'españa'               => 'ES',
+						'español'              => 'ES',
 						'united states'        => 'US',
 						'usa'                  => 'US',
 					);

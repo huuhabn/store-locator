@@ -29,6 +29,7 @@ class StorePostType {
 			'_asl_country'          => array( __CLASS__, 'sanitize_text' ),
 			'_asl_city'             => array( __CLASS__, 'sanitize_text' ),
 			'_asl_address'          => array( __CLASS__, 'sanitize_text' ),
+			'_asl_coordinates'      => array( __CLASS__, 'sanitize_text' ),
 			'_asl_latitude'         => array( __CLASS__, 'sanitize_float' ),
 			'_asl_longitude'        => array( __CLASS__, 'sanitize_float' ),
 			'_asl_phone'            => array( __CLASS__, 'sanitize_text' ),
