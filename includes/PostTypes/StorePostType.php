@@ -130,6 +130,10 @@ class StorePostType {
 		add_action( 'edited_store_country', array( $this, 'save_country_fields' ), 10, 2 );
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_term_assets' ) );
+
+		// Allow SVG uploads in WordPress media library.
+		add_filter( 'upload_mimes', array( $this, 'allow_svg_uploads' ) );
+		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_filetype' ), 10, 4 );
 	}
 
 	/**
@@ -336,30 +340,8 @@ class StorePostType {
 				if ( ! empty( $country_name ) ) {
 					$term = get_term_by( 'name', $country_name, 'store_country' );
 					if ( ! $term ) {
-						$default_codes = array(
-							'saudi arabia'         => 'SA',
-							'kuwait'               => 'KW',
-							'united arab emirates' => 'AE',
-							'uae'                  => 'AE',
-							'qatar'                => 'QA',
-							'oman'                 => 'OM',
-							'bahrain'              => 'BH',
-							'egypt'                => 'EG',
-							'jordan'               => 'JO',
-							'spain'                => 'ES',
-						);
-						$norm_name = strtolower( trim( $country_name ) );
-						$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
-
 						$term_data = wp_insert_term( $country_name, 'store_country' );
-						if ( ! is_wp_error( $term_data ) && $term_data ) {
-							$term_id = $term_data['term_id'];
-							if ( $code ) {
-								update_term_meta( $term_id, 'asl_country_code', $code );
-							}
-						} else {
-							$term_id = 0;
-						}
+						$term_id   = ( ! is_wp_error( $term_data ) && $term_data ) ? $term_data['term_id'] : 0;
 					} else {
 						$term_id = $term->term_id;
 					}
@@ -379,9 +361,14 @@ class StorePostType {
 	public function add_country_fields() {
 		?>
 		<div class="form-field term-group">
-			<label for="asl_country_code"><?php esc_html_e( 'Country Code (ISO 2-letter)', 'aseer-store-locator' ); ?></label>
-			<input type="text" id="asl_country_code" name="asl_country_code" value="" style="max-width:100px; text-transform:uppercase;" maxlength="2" />
-			<p class="description"><?php esc_html_e( 'Enter the 2-letter ISO country code (e.g. SA, KW, AE, QA, OM, BH, EG, JO, ES) to automatically display its flag emoji on the frontend.', 'aseer-store-locator' ); ?></p>
+			<label for="asl_country_flag_id"><?php esc_html_e( 'Country Flag', 'aseer-store-locator' ); ?></label>
+			<input type="hidden" id="asl_country_flag_id" name="asl_country_flag_id" value="" />
+			<div id="asl_country_flag_preview"></div>
+			<p style="margin-top: 5px;">
+				<button type="button" class="button" id="asl_upload_flag_btn"><?php esc_html_e( 'Upload/Choose Image', 'aseer-store-locator' ); ?></button>
+				<button type="button" class="button" id="asl_upload_flag_btn-clear"><?php esc_html_e( 'Clear', 'aseer-store-locator' ); ?></button>
+			</p>
+			<p class="description"><?php esc_html_e( 'Upload or select an image for the country flag.', 'aseer-store-locator' ); ?></p>
 		</div>
 		<?php
 	}
@@ -393,15 +380,27 @@ class StorePostType {
 	 * @return void
 	 */
 	public function edit_country_fields( $term ) {
-		$code = get_term_meta( $term->term_id, 'asl_country_code', true );
+		$flag_id   = get_term_meta( $term->term_id, 'asl_country_flag_id', true );
+		$flag_html = '';
+		if ( $flag_id ) {
+			$flag_url = wp_get_attachment_url( $flag_id );
+			if ( $flag_url ) {
+				$flag_html = '<img src="' . esc_url( $flag_url ) . '" style="max-width:150px;max-height:100px;display:block;margin-top:10px;" />';
+			}
+		}
 		?>
 		<tr class="form-field term-group-wrap">
 			<th scope="row">
-				<label for="asl_country_code"><?php esc_html_e( 'Country Code (ISO 2-letter)', 'aseer-store-locator' ); ?></label>
+				<label for="asl_country_flag_id"><?php esc_html_e( 'Country Flag', 'aseer-store-locator' ); ?></label>
 			</th>
 			<td>
-				<input type="text" id="asl_country_code" name="asl_country_code" value="<?php echo esc_attr( $code ); ?>" style="max-width:100px; text-transform:uppercase;" maxlength="2" />
-				<p class="description"><?php esc_html_e( 'Enter the 2-letter ISO country code (e.g. SA, KW, AE, QA, OM, BH, EG, JO, ES) to automatically display its flag emoji on the frontend.', 'aseer-store-locator' ); ?></p>
+				<input type="hidden" id="asl_country_flag_id" name="asl_country_flag_id" value="<?php echo esc_attr( $flag_id ); ?>" />
+				<div id="asl_country_flag_preview"><?php echo $flag_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+				<p style="margin-top: 5px;">
+					<button type="button" class="button" id="asl_upload_flag_btn"><?php esc_html_e( 'Upload/Choose Image', 'aseer-store-locator' ); ?></button>
+					<button type="button" class="button" id="asl_upload_flag_btn-clear"><?php esc_html_e( 'Clear', 'aseer-store-locator' ); ?></button>
+				</p>
+				<p class="description"><?php esc_html_e( 'Upload or select an image for the country flag.', 'aseer-store-locator' ); ?></p>
 			</td>
 		</tr>
 		<?php
@@ -414,10 +413,100 @@ class StorePostType {
 	 * @return void
 	 */
 	public function save_country_fields( $term_id ) {
-		if ( isset( $_POST['asl_country_code'] ) ) {
-			$code = strtoupper( sanitize_text_field( wp_unslash( $_POST['asl_country_code'] ) ) );
-			update_term_meta( $term_id, 'asl_country_code', $code );
+		if ( isset( $_POST['asl_country_flag_id'] ) ) {
+			$flag_id = sanitize_text_field( wp_unslash( $_POST['asl_country_flag_id'] ) );
+			update_term_meta( $term_id, 'asl_country_flag_id', $flag_id );
 		}
+	}
+
+	/**
+	 * Convert a country name (English, Spanish, Arabic) to its corresponding 2-letter ISO country code.
+	 *
+	 * @param string $country_name Country name.
+	 * @return string ISO 2-letter code or empty string.
+	 */
+	public static function country_name_to_code( $country_name ) {
+		$name = strtolower( trim( (string) $country_name ) );
+		if ( empty( $name ) ) {
+			return '';
+		}
+
+		$mapping = array(
+			// Saudi Arabia
+			'saudi arabia'                 => 'SA',
+			'saudi'                        => 'SA',
+			'ksa'                          => 'SA',
+			'السعودية'                     => 'SA',
+			'المملكة العربية السعودية'      => 'SA',
+
+			// Kuwait
+			'kuwait'                       => 'KW',
+			'الكويت'                       => 'KW',
+
+			// UAE
+			'united arab emirates'         => 'AE',
+			'uae'                          => 'AE',
+			'emirates'                     => 'AE',
+			'الإمارات العربية المتحدة'      => 'AE',
+			'الامارات العربية المتحدة'      => 'AE',
+			'الإمارات'                     => 'AE',
+			'الامارات'                     => 'AE',
+
+			// Qatar
+			'qatar'                        => 'QA',
+			'قطر'                          => 'QA',
+
+			// Oman
+			'oman'                         => 'OM',
+			'عمان'                         => 'OM',
+			'سلطنة عمان'                   => 'OM',
+
+			// Bahrain
+			'bahrain'                      => 'BH',
+			'البحرين'                      => 'BH',
+			'مملكة البحرين'                => 'BH',
+
+			// Egypt
+			'egypt'                        => 'EG',
+			'مصر'                          => 'EG',
+			'جمهورية مصر العربية'          => 'EG',
+
+			// Jordan
+			'jordan'                       => 'JO',
+			'الأردن'                       => 'JO',
+			'الاردن'                       => 'JO',
+			'المملكة الأردنية الهاشمية'     => 'JO',
+
+			// Spain
+			'spain'                        => 'ES',
+			'españa'                       => 'ES',
+			'espana'                       => 'ES',
+			'español'                      => 'ES',
+			'espanol'                      => 'ES',
+			'إسبانيا'                       => 'ES',
+			'اسبانيا'                      => 'ES',
+
+			// US
+			'united states'                => 'US',
+			'united states of america'     => 'US',
+			'usa'                          => 'US',
+			'us'                           => 'US',
+			'الولايات المتحدة'             => 'US',
+			'الولايات المتحدة الأمريكية'    => 'US',
+			'الولايات المتحدة الامريكية'    => 'US',
+			'أمريكا'                       => 'US',
+			'امريكا'                       => 'US',
+
+			// UK
+			'united kingdom'               => 'GB',
+			'uk'                           => 'GB',
+			'britain'                      => 'GB',
+			'great britain'                => 'GB',
+			'المملكة المتحدة'               => 'GB',
+			'بريطانيا'                     => 'GB',
+		);
+
+		return isset( $mapping[ $name ] ) ? $mapping[ $name ] : '';
 	}
 
 	/**
@@ -446,17 +535,18 @@ class StorePostType {
 	public function enqueue_term_assets( $hook ) {
 		global $current_screen;
 		if ( 'edit-tags.php' === $hook || 'term.php' === $hook ) {
-			if ( $current_screen && 'store_brand' === $current_screen->taxonomy ) {
+			if ( $current_screen && ( 'store_brand' === $current_screen->taxonomy || 'store_country' === $current_screen->taxonomy ) ) {
 				wp_enqueue_media();
 				wp_add_inline_script(
 					'jquery',
 					"jQuery(document).ready(function($) {
-						function setupUploader(buttonId, inputId, previewId) {
+						function setupUploader(buttonId, inputId, previewId, titleText) {
+							titleText = titleText || '" . esc_js( __( 'Choose Image', 'aseer-store-locator' ) ) . "';
 							$('body').on('click', buttonId, function(e) {
 								e.preventDefault();
 								var button = $(this);
 								var custom_uploader = wp.media({
-									title: '" . esc_js( __( 'Choose Brand Logo', 'aseer-store-locator' ) ) . "',
+									title: titleText,
 									layout: 'select',
 									button: { text: '" . esc_js( __( 'Use Image', 'aseer-store-locator' ) ) . "' },
 									multiple: false
@@ -472,8 +562,9 @@ class StorePostType {
 								$(previewId).html('');
 							});
 						}
-						setupUploader('#asl_upload_thumbnail_btn', '#asl_brand_thumbnail_id', '#asl_brand_thumbnail_preview');
-						setupUploader('#asl_upload_icon_btn', '#asl_brand_icon_id', '#asl_brand_icon_preview');
+						setupUploader('#asl_upload_thumbnail_btn', '#asl_brand_thumbnail_id', '#asl_brand_thumbnail_preview', '" . esc_js( __( 'Choose Brand Logo', 'aseer-store-locator' ) ) . "');
+						setupUploader('#asl_upload_icon_btn', '#asl_brand_icon_id', '#asl_brand_icon_preview', '" . esc_js( __( 'Choose Brand Logo', 'aseer-store-locator' ) ) . "');
+						setupUploader('#asl_upload_flag_btn', '#asl_country_flag_id', '#asl_country_flag_preview', '" . esc_js( __( 'Choose Country Flag', 'aseer-store-locator' ) ) . "');
 					});"
 				);
 			}
@@ -581,6 +672,35 @@ class StorePostType {
 			$icon_id = sanitize_text_field( wp_unslash( $_POST['asl_brand_icon_id'] ) );
 			update_term_meta( $term_id, 'asl_brand_icon_id', $icon_id );
 		}
+	}
+
+	/**
+	 * Allow SVG uploads in WordPress.
+	 *
+	 * @param array $mimes Allowed mime types.
+	 * @return array
+	 */
+	public function allow_svg_uploads( $mimes ) {
+		$mimes['svg'] = 'image/svg+xml';
+		return $mimes;
+	}
+
+	/**
+	 * Bypass filetype check warning for SVGs in WordPress.
+	 *
+	 * @param array  $data     File data.
+	 * @param string $file     File path.
+	 * @param string $filename File name.
+	 * @param array  $mimes    Mime types.
+	 * @return array
+	 */
+	public function check_svg_filetype( $data, $file, $filename, $mimes ) {
+		$filetype = wp_check_filetype( $filename, $mimes );
+		if ( 'svg' === $filetype['ext'] ) {
+			$data['ext']  = 'svg';
+			$data['type'] = 'image/svg+xml';
+		}
+		return $data;
 	}
 }
 

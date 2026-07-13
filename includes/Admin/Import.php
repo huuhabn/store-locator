@@ -402,34 +402,8 @@ class Import {
 			if ( ! empty( $country ) ) {
 				$term = get_term_by( 'name', $country, 'store_country' );
 				if ( ! $term ) {
-					$default_codes = array(
-						'saudi arabia'         => 'SA',
-						'kuwait'               => 'KW',
-						'united arab emirates' => 'AE',
-						'uae'                  => 'AE',
-						'qatar'                => 'QA',
-						'oman'                 => 'OM',
-						'bahrain'              => 'BH',
-						'egypt'                => 'EG',
-						'jordan'               => 'JO',
-						'spain'                => 'ES',
-						'españa'               => 'ES',
-						'español'              => 'ES',
-						'united states'        => 'US',
-						'usa'                  => 'US',
-					);
-					$norm_name = strtolower( trim( $country ) );
-					$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
-
 					$term_data = wp_insert_term( $country, 'store_country' );
-					if ( ! is_wp_error( $term_data ) && $term_data ) {
-						$term_id = $term_data['term_id'];
-						if ( $code ) {
-							update_term_meta( $term_id, 'asl_country_code', $code );
-						}
-					} else {
-						$term_id = 0;
-					}
+					$term_id   = ( ! is_wp_error( $term_data ) && $term_data ) ? $term_data['term_id'] : 0;
 				} else {
 					$term_id = $term->term_id;
 				}

@@ -275,33 +275,16 @@ class StoreController {
 		);
 		$countries = array();
 		if ( ! is_wp_error( $country_terms ) && ! empty( $country_terms ) ) {
-			$default_codes = array(
-				'saudi arabia'         => 'SA',
-				'kuwait'               => 'KW',
-				'united arab emirates' => 'AE',
-				'uae'                  => 'AE',
-				'qatar'                => 'QA',
-				'oman'                 => 'OM',
-				'bahrain'              => 'BH',
-				'egypt'                => 'EG',
-				'jordan'               => 'JO',
-				'spain'                => 'ES',
-				'españa'               => 'ES',
-				'español'              => 'ES',
-				'united states'        => 'US',
-				'usa'                  => 'US',
-			);
 			foreach ( $country_terms as $term ) {
-				$code = get_term_meta( $term->term_id, 'asl_country_code', true );
-				if ( ! $code ) {
-					// Fallback to guess country code based on term name
-					$norm_name = strtolower( trim( $term->name ) );
-					$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
-				}
-				$flag = $code ? StorePostType::country_code_to_flag( $code ) : '';
+				$code     = StorePostType::country_name_to_code( $term->name );
+				$flag     = $code ? StorePostType::country_code_to_flag( $code ) : '';
+				$flag_id  = get_term_meta( $term->term_id, 'asl_country_flag_id', true );
+				$flag_url = $flag_id ? wp_get_attachment_url( $flag_id ) : '';
+
 				$countries[] = array(
-					'name' => $term->name,
-					'flag' => $flag,
+					'name'     => $term->name,
+					'flag'     => $flag,
+					'flag_url' => $flag_url ? esc_url_raw( $flag_url ) : '',
 				);
 			}
 		}
@@ -309,29 +292,13 @@ class StoreController {
 		// Fallback to legacy distinct metadata with flag guessing if taxonomy is completely empty.
 		if ( empty( $countries ) ) {
 			$legacy_countries = $get_distinct( '_asl_country' );
-			$default_codes = array(
-				'saudi arabia'         => 'SA',
-				'kuwait'               => 'KW',
-				'united arab emirates' => 'AE',
-				'uae'                  => 'AE',
-				'qatar'                => 'QA',
-				'oman'                 => 'OM',
-				'bahrain'              => 'BH',
-				'egypt'                => 'EG',
-				'jordan'               => 'JO',
-				'spain'                => 'ES',
-				'españa'               => 'ES',
-				'español'              => 'ES',
-				'united states'        => 'US',
-				'usa'                  => 'US',
-			);
 			foreach ( $legacy_countries as $name ) {
-				$norm_name = strtolower( trim( $name ) );
-				$code      = isset( $default_codes[ $norm_name ] ) ? $default_codes[ $norm_name ] : '';
-				$flag      = $code ? StorePostType::country_code_to_flag( $code ) : '';
+				$code = StorePostType::country_name_to_code( $name );
+				$flag = $code ? StorePostType::country_code_to_flag( $code ) : '';
 				$countries[] = array(
-					'name' => $name,
-					'flag' => $flag,
+					'name'     => $name,
+					'flag'     => $flag,
+					'flag_url' => '',
 				);
 			}
 		}

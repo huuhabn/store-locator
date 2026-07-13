@@ -409,7 +409,7 @@
 			.then( function ( data ) {
 				self.filterData = data || { brands: [], countries: [] };
 
-				// Populate country dropdown with flag emojis
+				// Populate country dropdown with flag images (custom dropdown)
 				if ( self.els.country && data.countries ) {
 					// Clear existing options except the first one (All Countries placeholder)
 					while ( self.els.country.options.length > 1 ) {
@@ -418,9 +418,11 @@
 					data.countries.forEach( function ( country ) {
 						var opt = document.createElement( 'option' );
 						opt.value = country.name;
-						opt.textContent = ( country.flag ? country.flag + ' ' : '' ) + country.name;
+						opt.textContent = country.name;
 						self.els.country.appendChild( opt );
 					} );
+					// Build the custom visual dropdown with flag images
+					self.buildCountryDropdown( data.countries );
 				}
 
 				self.populateSelect( self.els.brand, data.brands );
@@ -453,6 +455,117 @@
 			opt.value = val;
 			opt.textContent = val;
 			select.appendChild( opt );
+		} );
+	};
+
+	/**
+	 * Build a custom dropdown with flag images to replace the native country <select>.
+	 * The native select is hidden but kept in sync so .value reads work everywhere.
+	 */
+	ASLLocator.prototype.buildCountryDropdown = function ( countries ) {
+		var self = this;
+		var select = this.els.country;
+		if ( ! select ) {
+			return;
+		}
+
+		// Remove any previous custom dropdown.
+		var prev = select.parentNode.querySelector( '.asl-country-dd' );
+		if ( prev ) {
+			prev.remove();
+		}
+
+		// Hide the native select.
+		select.style.display = 'none';
+
+		// Wrapper.
+		var dd = document.createElement( 'div' );
+		dd.className = 'asl-country-dd';
+
+		// Trigger button.
+		var trigger = document.createElement( 'button' );
+		trigger.type = 'button';
+		trigger.className = 'asl-country-dd__trigger';
+		trigger.innerHTML = '<span class="asl-country-dd__label">' + this.escapeHtml( i18n.allCountries || 'All Countries' ) + '</span>' +
+			'<span class="asl-country-dd__arrow"></span>';
+		dd.appendChild( trigger );
+
+		// Dropdown list.
+		var list = document.createElement( 'ul' );
+		list.className = 'asl-country-dd__list';
+
+		// "All Countries" item (no flag).
+		var allItem = document.createElement( 'li' );
+		allItem.className = 'asl-country-dd__item is-selected';
+		allItem.setAttribute( 'data-value', '' );
+		allItem.innerHTML = '<span class="asl-country-dd__item-label">' + this.escapeHtml( i18n.allCountries || 'All Countries' ) + '</span>';
+		list.appendChild( allItem );
+
+		// Country items with flag images.
+		countries.forEach( function ( country ) {
+			var li = document.createElement( 'li' );
+			li.className = 'asl-country-dd__item';
+			li.setAttribute( 'data-value', country.name );
+
+			var flagHtml = '';
+			if ( country.flag_url ) {
+				flagHtml = '<img class="asl-country-dd__flag" src="' + self.escapeAttr( country.flag_url ) + '" alt="" />';
+			}
+
+			li.innerHTML = flagHtml +
+				'<span class="asl-country-dd__item-label">' + self.escapeHtml( country.name ) + '</span>';
+			list.appendChild( li );
+		} );
+
+		dd.appendChild( list );
+
+		// Insert after the hidden select.
+		select.parentNode.appendChild( dd );
+
+		// Toggle open/close on trigger click.
+		trigger.addEventListener( 'click', function ( e ) {
+			e.stopPropagation();
+			dd.classList.toggle( 'is-open' );
+		} );
+
+		// Handle item selection.
+		list.addEventListener( 'click', function ( e ) {
+			var item = e.target.closest( '.asl-country-dd__item' );
+			if ( ! item ) {
+				return;
+			}
+
+			var val = item.getAttribute( 'data-value' );
+
+			// Update selected state.
+			list.querySelectorAll( '.asl-country-dd__item' ).forEach( function ( li ) {
+				li.classList.remove( 'is-selected' );
+			} );
+			item.classList.add( 'is-selected' );
+
+			// Update trigger display.
+			var flagImg = item.querySelector( '.asl-country-dd__flag' );
+			var label = item.querySelector( '.asl-country-dd__item-label' );
+			var triggerContent = '';
+			if ( flagImg ) {
+				triggerContent += '<img class="asl-country-dd__flag" src="' + self.escapeAttr( flagImg.src ) + '" alt="" />';
+			}
+			triggerContent += '<span class="asl-country-dd__label">' + self.escapeHtml( label.textContent ) + '</span>';
+			triggerContent += '<span class="asl-country-dd__arrow"></span>';
+			trigger.innerHTML = triggerContent;
+
+			// Sync value to hidden native select and fire change event.
+			select.value = val;
+			select.dispatchEvent( new Event( 'change' ) );
+
+			dd.classList.remove( 'is-open' );
+		} );
+
+		// Close when clicking outside.
+		document.addEventListener( 'click', function ( e ) {
+			if ( ! dd.contains( e.target ) ) {
+				dd.classList.remove( 'is-open' );
+			}
 		} );
 	};
 
@@ -621,11 +734,12 @@
 		}
 		return '';
 	};
+	
 
 	ASLLocator.prototype.buildCard = function ( store, isFirst ) {
 		var self = this;
 		var card = document.createElement( 'article' );
-		card.className = 'asl-card' + ( isFirst ? ' is-active' : '' );
+		card.className = 'asl-card';
 		card.setAttribute( 'data-id', store.id );
 
 		// Icon: use icon-variant logo (circle card icon), then thumbnail, then fallback.
