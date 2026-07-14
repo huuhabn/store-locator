@@ -108,6 +108,10 @@
 		this.loadFilters();
 		this.loadStores();
 		this.updateViewMapButton();
+
+		if ( this.els.viewMapBtn ) {
+			document.body.appendChild( this.els.viewMapBtn );
+		}
 	};
 
 	ASLLocator.prototype.resolveDefaultZoom = function () {

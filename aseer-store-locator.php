@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // -----------------------------------------------------------------------
 // Constants.
 // -----------------------------------------------------------------------
-define( 'ASL_VERSION', '1.5.5' );
+define( 'ASL_VERSION', '1.5.6' );
 define( 'ASL_PLUGIN_FILE', __FILE__ );
 define( 'ASL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ASL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
