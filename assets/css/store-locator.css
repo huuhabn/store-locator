@@ -740,30 +740,34 @@
 	.asl-locator__map-wrap {
 		display: none;
 		order: -1;
+		min-height: 0 !important;
 	}
 
 	.asl-locator.asl-view-map .asl-locator__map-wrap {
 		display: block;
+		order: 0;
+		height: 540px;
+		min-height: 0 !important;
+		box-sizing: border-box;
 	}
 
 	.asl-locator.asl-view-map .asl-locator__sidebar {
 		display: none;
 	}
 
-	.asl-locator.asl-view-map .asl-locator__map-wrap {
-		order: 0;
-	}
-
 	.asl-locator__sidebar {
-		height: 480px; /* Fixed height on mobile ensures the list inside scrolls perfectly on all browsers (including iOS Safari) */
+		height: 540px; /* Fixed height on mobile ensures the list inside scrolls perfectly on all browsers (including iOS Safari) */
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		padding: 0 16px 80px;
+		padding: 24px 16px 24px;
+		box-sizing: border-box;
+		min-height: 0 !important;
 	}
 
 	.asl-locator__map {
-		height: 480px !important; /* Set matching map height on mobile to ensure zero page layout shifts when toggling views */
+		height: 100% !important; /* Set matching map height on mobile to ensure zero page layout shifts when toggling views */
+		min-height: 0 !important;
 	}
 
 	/* Mobile card: top row = icon + body, actions = full-width row below */

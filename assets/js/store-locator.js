@@ -158,17 +158,30 @@
 	};
 
 	ASLLocator.prototype.initLeafletMap = function ( center, zoom ) {
+		// Define strict bounds around the world to prevent infinite horizontal scrolling / empty grey canvas
+		var southWest = L.latLng( -85, -180 ),
+			northEast = L.latLng( 85, 180 );
+		var bounds    = L.latLngBounds( southWest, northEast );
+
 		this.map = L.map( this.els.mapEl, {
+			center: center,
+			zoom: zoom,
 			zoomControl: false,
 			scrollWheelZoom: !!settings.scrollZoom,
 			attributionControl: false,
-		} ).setView( center, zoom );
+			maxBounds: bounds,
+			maxBoundsViscosity: 1.0,
+			minZoom: 2
+		} );
 
 		L.control.zoom( { position: 'topright' } ).addTo( this.map );
 
 		var tileUrl = settings.tileUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-		L.tileLayer( tileUrl, { maxZoom: 19 } ).addTo( this.map );
+		L.tileLayer( tileUrl, {
+			maxZoom: 19,
+			noWrap: true,
+		} ).addTo( this.map );
 
 		if ( typeof L.markerClusterGroup === 'function' ) {
 			this.markerLayer = L.markerClusterGroup();
@@ -197,6 +210,16 @@
 			fullscreenControl: true,
 			scrollwheel: !!settings.scrollZoom,
 			gestureHandling: settings.scrollZoom ? 'auto' : 'cooperative',
+			minZoom: 2,
+			restriction: {
+				latLngBounds: {
+					north: 85,
+					south: -85,
+					west: -180,
+					east: 180
+				},
+				strictBounds: true,
+			},
 		};
 
 		if ( 'dark' === settings.tileStyle ) {
