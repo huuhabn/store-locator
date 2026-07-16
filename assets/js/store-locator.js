@@ -119,8 +119,11 @@
 		if ( ! isNaN( attr ) ) {
 			return attr;
 		}
-		if ( settings.defaultZoom ) {
-			return settings.defaultZoom;
+		var currentSettings = ( window.ASL_Data && window.ASL_Data.settings ) || {};
+		var zoomVal = typeof currentSettings.defaultZoom !== 'undefined' ? currentSettings.defaultZoom : currentSettings.default_zoom;
+		var zoom = parseInt( zoomVal, 10 );
+		if ( ! isNaN( zoom ) ) {
+			return zoom;
 		}
 		return 4;
 	};
@@ -135,8 +138,27 @@
 				return parts;
 			}
 		}
-		if ( settings.defaultCenter && 'number' === typeof settings.defaultCenter.lat ) {
-			return [ settings.defaultCenter.lat, settings.defaultCenter.lng ];
+		var currentSettings = ( window.ASL_Data && window.ASL_Data.settings ) || {};
+		var centerObj = currentSettings.defaultCenter || currentSettings.default_center;
+		if ( centerObj ) {
+			var lat = typeof centerObj.lat !== 'undefined' ? centerObj.lat : centerObj.default_center_lat;
+			var lng = typeof centerObj.lng !== 'undefined' ? centerObj.lng : centerObj.default_center_lng;
+			if ( typeof lat !== 'undefined' && typeof lng !== 'undefined' ) {
+				return [ parseFloat( lat ), parseFloat( lng ) ];
+			}
+			if ( typeof centerObj === 'string' ) {
+				var parts = centerObj.split( ',' ).map( function ( n ) {
+					return parseFloat( n.trim() );
+				} );
+				if ( 2 === parts.length && ! isNaN( parts[ 0 ] ) && ! isNaN( parts[ 1 ] ) ) {
+					return parts;
+				}
+			}
+		}
+		var rootLat = currentSettings.default_center_lat || currentSettings.defaultCenterLat;
+		var rootLng = currentSettings.default_center_lng || currentSettings.defaultCenterLng;
+		if ( typeof rootLat !== 'undefined' && typeof rootLng !== 'undefined' ) {
+			return [ parseFloat( rootLat ), parseFloat( rootLng ) ];
 		}
 		return [ 20, 0 ];
 	};
@@ -164,15 +186,13 @@
 		var bounds    = L.latLngBounds( southWest, northEast );
 
 		this.map = L.map( this.els.mapEl, {
-			center: center,
-			zoom: zoom,
 			zoomControl: false,
 			scrollWheelZoom: !!settings.scrollZoom,
 			attributionControl: false,
 			maxBounds: bounds,
 			maxBoundsViscosity: 1.0,
 			minZoom: 2
-		} );
+		} ).setView( center, zoom );
 
 		L.control.zoom( { position: 'topright' } ).addTo( this.map );
 
@@ -399,12 +419,25 @@
 			var self = this;
 			setTimeout( function () {
 				self.mapInvalidateSize();
+				self.fitToFilteredStores();
 			}, 50 );
 		} else {
 			this.mobileView = 'list';
 			this.root.classList.remove( 'asl-view-map' );
 		}
 		this.updateViewMapButton();
+	};
+
+	ASLLocator.prototype.fitToFilteredStores = function () {
+		var bounds = [];
+		this.filtered.forEach( function ( store ) {
+			if ( store.latitude && store.longitude ) {
+				bounds.push( [ store.latitude, store.longitude ] );
+			}
+		} );
+		if ( bounds.length ) {
+			this.mapFitBounds( bounds );
+		}
 	};
 
 	ASLLocator.prototype.setActiveBrand = function ( brand ) {
