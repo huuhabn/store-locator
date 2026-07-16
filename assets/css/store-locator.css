@@ -1,6 +1,6 @@
 /* =========================================================
    Aseer Store Locator — Figma-aligned frontend styles
-   Design tokens from Aseer Time Store Locator (Figma)
+   Design tokens from Aseer Time Store Locator
    ========================================================= */
 
 .asl-locator {
@@ -124,6 +124,7 @@
 .asl-country-dd button:not(.button-style):hover,
 .asl-country-dd button:not(.button-style) {
 	background-color: transparent;
+	color: #000000;
 }
 
 .asl-country-dd__trigger {

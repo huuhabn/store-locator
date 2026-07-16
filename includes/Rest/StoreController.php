@@ -333,7 +333,7 @@ class StoreController {
 		$directions_url = get_post_meta( $id, '_asl_directions_url', true );
 		if ( empty( $directions_url ) && $lat && $lng ) {
 			$directions_url = sprintf(
-				'https://www.google.com/maps/dir/?api=1&destination=%s,%s',
+				'https://www.google.com/maps/search/?api=1&query=%s,%s',
 				rawurlencode( (string) $lat ),
 				rawurlencode( (string) $lng )
 			);
@@ -341,16 +341,6 @@ class StoreController {
 
 		return array(
 			'id'             => $id,
-			// get_the_title() runs the 'the_title' filter chain (wptexturize,
-			// convert_chars, etc.), which HTML-entity-encodes things like
-			// apostrophes ( ' -> &#8217; ) and ampersands so the string is
-			// ready to drop straight into raw HTML. That's correct for a PHP
-			// template's the_title(), but wrong for a JSON API: the frontend
-			// JS escapes text itself (via textContent) before inserting it
-			// into the DOM, so an already-encoded string gets escaped a
-			// second time and shows up as literal "&#8217;" on the page.
-			// Decoding here keeps the API contract as plain text, with
-			// exactly one escaping step happening (in the browser).
 			'name'           => $this->decode_entities( get_the_title( $id ) ),
 			'brand'          => $this->decode_entities(
 				( function() use ( $id ) {
@@ -378,10 +368,6 @@ class StoreController {
 			'email'          => $this->decode_entities( get_post_meta( $id, '_asl_email', true ) ),
 			'opening_hours'  => $this->decode_entities( get_post_meta( $id, '_asl_opening_hours', true ) ),
 			'services'       => $services,
-			// Unlike the fields above, `details` is deliberately-authored rich
-			// HTML from a wp_editor field and is inserted as HTML (not text)
-			// by the frontend — wp_kses_post() is the correct/only treatment
-			// here, decoding entities would corrupt any real markup in it.
 			'details'        => wp_kses_post( get_post_meta( $id, '_asl_details', true ) ),
 			'directions_url' => esc_url_raw( $directions_url ),
 			'thumbnail'      => get_the_post_thumbnail_url( $id, 'medium' ),
