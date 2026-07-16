@@ -518,7 +518,6 @@
 							return {
 								value: brand,
 								label: brand,
-								imgUrl: brandLogos[ brand ] || '',
 							};
 						} ),
 						onSelect: function ( val ) {
