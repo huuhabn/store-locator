@@ -226,7 +226,12 @@
 
 .asl-country-dd__item.is-selected {
 	font-weight: 600;
-	color: var(--asl-color-primary);
+	color: #ffffff;
+	background: #2563eb;
+}
+
+.asl-country-dd__item.is-selected:hover {
+	background: #1d4ed8;
 }
 
 .asl-country-dd__item-label {

@@ -445,6 +445,9 @@
 		if ( this.els.brand ) {
 			this.els.brand.value = this.activeBrand;
 		}
+		if ( this.brandDD ) {
+			this.setDropdownValue( this.brandDD, this.activeBrand );
+		}
 		this.syncBrandPills();
 	};
 
@@ -482,7 +485,17 @@
 						self.els.country.appendChild( opt );
 					} );
 					// Build the custom visual dropdown with flag images
-					self.buildCountryDropdown( data.countries );
+					self.countryDD = self.buildCustomDropdown( {
+						select: self.els.country,
+						allLabel: i18n.allCountries || 'All Countries',
+						items: data.countries.map( function ( country ) {
+							return {
+								value: country.name,
+								label: country.name,
+								imgUrl: country.flag_url || '',
+							};
+						} ),
+					} );
 				}
 
 				self.populateSelect( self.els.brand, data.brands );
@@ -494,6 +507,26 @@
 				if ( data.brandLogosFull ) {
 					Object.assign( brandLogosFull, data.brandLogosFull );
 				}
+
+				// Build the custom visual dropdown for brands (with logos) to
+				// match the country dropdown styling.
+				if ( self.els.brand && data.brands ) {
+					self.brandDD = self.buildCustomDropdown( {
+						select: self.els.brand,
+						allLabel: i18n.allBrands || 'All Brands',
+						items: ( data.brands || [] ).map( function ( brand ) {
+							return {
+								value: brand,
+								label: brand,
+								imgUrl: brandLogos[ brand ] || '',
+							};
+						} ),
+						onSelect: function ( val ) {
+							self.setActiveBrand( val );
+						},
+					} );
+				}
+
 				self.renderBrandPills( data.brands || [] );
 
 				// Synchronize UI dropdown and active pills state with the default activeBrand on load
@@ -519,14 +552,21 @@
 	};
 
 	/**
-	 * Build a custom dropdown with flag images to replace the native country <select>.
+	 * Build a custom dropdown with images to replace a native <select>.
 	 * The native select is hidden but kept in sync so .value reads work everywhere.
+	 *
+	 * @param {Object} config
+	 * @param {HTMLSelectElement} config.select   Native select to mirror/hide.
+	 * @param {Array}  config.items    Items as { value, label, imgUrl }.
+	 * @param {string} config.allLabel Label for the "all" placeholder item.
+	 * @param {Function} [config.onSelect] Optional callback fired with the value.
+	 * @return {HTMLElement|null} The created dropdown element.
 	 */
-	ASLLocator.prototype.buildCountryDropdown = function ( countries ) {
+	ASLLocator.prototype.buildCustomDropdown = function ( config ) {
 		var self = this;
-		var select = this.els.country;
+		var select = config.select;
 		if ( ! select ) {
-			return;
+			return null;
 		}
 
 		// Remove any previous custom dropdown.
@@ -546,7 +586,7 @@
 		var trigger = document.createElement( 'button' );
 		trigger.type = 'button';
 		trigger.className = 'asl-country-dd__trigger';
-		trigger.innerHTML = '<span class="asl-country-dd__label">' + this.escapeHtml( i18n.allCountries || 'All Countries' ) + '</span>' +
+		trigger.innerHTML = '<span class="asl-country-dd__label">' + this.escapeHtml( config.allLabel ) + '</span>' +
 			'<span class="asl-country-dd__arrow"></span>';
 		dd.appendChild( trigger );
 
@@ -554,26 +594,26 @@
 		var list = document.createElement( 'ul' );
 		list.className = 'asl-country-dd__list';
 
-		// "All Countries" item (no flag).
+		// "All" item (no image).
 		var allItem = document.createElement( 'li' );
 		allItem.className = 'asl-country-dd__item is-selected';
 		allItem.setAttribute( 'data-value', '' );
-		allItem.innerHTML = '<span class="asl-country-dd__item-label">' + this.escapeHtml( i18n.allCountries || 'All Countries' ) + '</span>';
+		allItem.innerHTML = '<span class="asl-country-dd__item-label">' + this.escapeHtml( config.allLabel ) + '</span>';
 		list.appendChild( allItem );
 
-		// Country items with flag images.
-		countries.forEach( function ( country ) {
+		// Items with optional images.
+		( config.items || [] ).forEach( function ( item ) {
 			var li = document.createElement( 'li' );
 			li.className = 'asl-country-dd__item';
-			li.setAttribute( 'data-value', country.name );
+			li.setAttribute( 'data-value', item.value );
 
-			var flagHtml = '';
-			if ( country.flag_url ) {
-				flagHtml = '<img class="asl-country-dd__flag" src="' + self.escapeAttr( country.flag_url ) + '" alt="" />';
+			var imgHtml = '';
+			if ( item.imgUrl ) {
+				imgHtml = '<img class="asl-country-dd__flag" src="' + self.escapeAttr( item.imgUrl ) + '" alt="" />';
 			}
 
-			li.innerHTML = flagHtml +
-				'<span class="asl-country-dd__item-label">' + self.escapeHtml( country.name ) + '</span>';
+			li.innerHTML = imgHtml +
+				'<span class="asl-country-dd__item-label">' + self.escapeHtml( item.label ) + '</span>';
 			list.appendChild( li );
 		} );
 
@@ -597,26 +637,16 @@
 
 			var val = item.getAttribute( 'data-value' );
 
-			// Update selected state.
-			list.querySelectorAll( '.asl-country-dd__item' ).forEach( function ( li ) {
-				li.classList.remove( 'is-selected' );
-			} );
-			item.classList.add( 'is-selected' );
-
-			// Update trigger display.
-			var flagImg = item.querySelector( '.asl-country-dd__flag' );
-			var label = item.querySelector( '.asl-country-dd__item-label' );
-			var triggerContent = '';
-			if ( flagImg ) {
-				triggerContent += '<img class="asl-country-dd__flag" src="' + self.escapeAttr( flagImg.src ) + '" alt="" />';
-			}
-			triggerContent += '<span class="asl-country-dd__label">' + self.escapeHtml( label.textContent ) + '</span>';
-			triggerContent += '<span class="asl-country-dd__arrow"></span>';
-			trigger.innerHTML = triggerContent;
+			// Update selected state + trigger display.
+			self.setDropdownValue( dd, val );
 
 			// Sync value to hidden native select and fire change event.
 			select.value = val;
 			select.dispatchEvent( new Event( 'change' ) );
+
+			if ( config.onSelect ) {
+				config.onSelect( val );
+			}
 
 			dd.classList.remove( 'is-open' );
 		} );
@@ -627,6 +657,46 @@
 				dd.classList.remove( 'is-open' );
 			}
 		} );
+
+		return dd;
+	};
+
+	/**
+	 * Sync a custom dropdown's selected item + trigger display to a value.
+	 *
+	 * @param {HTMLElement} dd  Dropdown element created by buildCustomDropdown.
+	 * @param {string}      val Value to select.
+	 */
+	ASLLocator.prototype.setDropdownValue = function ( dd, val ) {
+		if ( ! dd ) {
+			return;
+		}
+		val = val || '';
+		var list = dd.querySelector( '.asl-country-dd__list' );
+		var trigger = dd.querySelector( '.asl-country-dd__trigger' );
+		var selectedItem = null;
+
+		list.querySelectorAll( '.asl-country-dd__item' ).forEach( function ( li ) {
+			var match = ( li.getAttribute( 'data-value' ) || '' ) === val;
+			li.classList.toggle( 'is-selected', match );
+			if ( match ) {
+				selectedItem = li;
+			}
+		} );
+
+		if ( ! selectedItem ) {
+			return;
+		}
+
+		var img = selectedItem.querySelector( '.asl-country-dd__flag' );
+		var label = selectedItem.querySelector( '.asl-country-dd__item-label' );
+		var content = '';
+		if ( img ) {
+			content += '<img class="asl-country-dd__flag" src="' + this.escapeAttr( img.src ) + '" alt="" />';
+		}
+		content += '<span class="asl-country-dd__label">' + this.escapeHtml( label.textContent ) + '</span>';
+		content += '<span class="asl-country-dd__arrow"></span>';
+		trigger.innerHTML = content;
 	};
 
 	ASLLocator.prototype.renderBrandPills = function ( brands ) {
@@ -806,7 +876,7 @@
 		var logoUrl = this.getBrandLogo( store.brand ) || store.thumbnail || '';
 		var iconHtml = logoUrl
 			? '<img src="' + this.escapeAttr( logoUrl ) + '" alt="" />'
-			: '<span class="asl-card__icon-fallback">' + this.escapeHtml( ( store.brand || store.name ).charAt( 0 ) ) + '</span>';
+			: '<span title="' + this.escapeHtml( store.brand || store.name ) + '" class="asl-card__icon-fallback">' + this.escapeHtml( ( store.brand || store.name ).charAt( 0 ) ) + '</span>';
 
 		var hoursHtml = store.opening_hours
 			? '<p class="asl-card__hours"><span class="asl-icon asl-icon--clock" aria-hidden="true"></span>' +
