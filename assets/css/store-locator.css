@@ -68,6 +68,8 @@
 /* ---------------- Toolbar (search + brand pills) ---------------- */
 
 .asl-locator__toolbar {
+	position: relative;
+	z-index: 5;
 	max-width: 1118px;
 	margin: 0 auto;
 	padding: 24px 16px 0;
@@ -409,6 +411,8 @@
 /* ---------------- Main layout (list + map) ---------------- */
 
 .asl-locator__main {
+	position: relative;
+	z-index: 1;
 	display: grid;
 	grid-template-columns: minmax(320px, 682px) 1fr;
 	align-items: stretch;

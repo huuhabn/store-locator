@@ -13,6 +13,7 @@
 	var i18n = window.ASL_Data.i18n || {};
 	var settings = window.ASL_Data.settings || {};
 	var brandLogos = window.ASL_Data.brandLogos || {};
+	var brandLogosFull = window.ASL_Data.brandLogosFull || {};
 	function initLocator( root ) {
 		if ( ! root || root._asl_locator_initialized ) {
 			return;

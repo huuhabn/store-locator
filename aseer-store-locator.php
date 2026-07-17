@@ -3,7 +3,7 @@
  * Plugin Name:       Aseer Store Locator
  * Plugin URI:         https://aseertime.com
  * Description:        A store locator plugin built with Leaflet.js (Google Map API Support), a REST API backend, marker clustering, live filtering, and CSV bulk import.
- * Version:            1.5.23
+ * Version:            1.5.24
  * Requires at least:  5.8
  * Requires PHP:       7.4
  * Author:             Aseer Time Group
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // -----------------------------------------------------------------------
 // Constants.
 // -----------------------------------------------------------------------
-define( 'ASL_VERSION', '1.5.23' );
+define( 'ASL_VERSION', '1.5.27' );
 define( 'ASL_PLUGIN_FILE', __FILE__ );
 define( 'ASL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ASL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
