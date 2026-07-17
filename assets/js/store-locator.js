@@ -13,8 +13,6 @@
 	var i18n = window.ASL_Data.i18n || {};
 	var settings = window.ASL_Data.settings || {};
 	var brandLogos = window.ASL_Data.brandLogos || {};
-	var brandLogosFull = window.ASL_Data.brandLogosFull || {};
-
 	function initLocator( root ) {
 		if ( ! root || root._asl_locator_initialized ) {
 			return;
@@ -532,6 +530,10 @@
 				if ( self.activeBrand ) {
 					self.setActiveBrand( self.activeBrand );
 				}
+
+				if ( self.stores && self.stores.length ) {
+					self.applyFilters( { keepView: true } );
+				}
 			} )
 			.catch( function () {
 				/* Progressive enhancement. */
@@ -873,9 +875,11 @@
 
 		// Icon: use icon-variant logo (circle card icon), then thumbnail, then fallback.
 		var logoUrl = this.getBrandLogo( store.brand ) || store.thumbnail || '';
+		var fallbackLabel = String( store.brand || store.name || '' );
+		var fallbackInitial = fallbackLabel ? fallbackLabel.charAt( 0 ) : '?';
 		var iconHtml = logoUrl
 			? '<img src="' + this.escapeAttr( logoUrl ) + '" alt="" />'
-			: '<span title="' + this.escapeHtml( store.brand || store.name ) + '" class="asl-card__icon-fallback">' + this.escapeHtml( ( store.brand || store.name ).charAt( 0 ) ) + '</span>';
+			: '<span title="' + this.escapeHtml( fallbackLabel ) + '" class="asl-card__icon-fallback">' + this.escapeHtml( fallbackInitial ) + '</span>';
 
 		var hoursHtml = store.opening_hours
 			? '<p class="asl-card__hours"><span class="asl-icon asl-icon--clock" aria-hidden="true"></span>' +
@@ -892,8 +896,6 @@
 			? '<a class="asl-btn asl-btn--phone" href="tel:' + this.escapeAttr( store.phone ) + '" aria-label="' + this.escapeAttr( store.phone ) + '"><span class="asl-icon asl-icon--phone" aria-hidden="true"></span></a>'
 			: '';
 
-		// Card structure: top row (icon + body) + bottom actions row.
-		// On desktop the top row renders inline; on mobile it stacks with actions below.
 		card.innerHTML =
 			'<div class="asl-card__top">' +
 			'<div class="asl-card__icon">' + iconHtml + '</div>' +
