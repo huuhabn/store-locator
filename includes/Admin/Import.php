@@ -35,7 +35,7 @@ class Import {
 		'coordinates',
 		'phone',
 		'opening_hours',
-		'services',
+		'direction_url',
 	);
 
 	/**
@@ -140,7 +140,7 @@ class Import {
 	/**
 	 * Handle a "Download Example Template" request: stream a CSV with the
 	 * exact header the importer expects, plus a few example rows showing
-	 * how to quote fields (like services) that contain commas.
+	 * how to quote fields (like opening_hours) that contain commas.
 	 *
 	 * @return void
 	 */
@@ -191,7 +191,7 @@ class Import {
 				'24.7136,46.6753',
 				'+966 11 123 4567',
 				'Mon-Sat 10:00-22:00',
-				'Watches, Repairs, Gift Wrapping',
+				'https://maps.google.com/?q=24.7136,46.6753',
 			),
 			array(
 				'Farooj Abu Alabd - City Mall',
@@ -201,7 +201,7 @@ class Import {
 				'21.5433,39.1728',
 				'+966 12 234 5678',
 				'Sun-Thu 09:00-23:00',
-				'Dine-in, Delivery',
+				'https://maps.google.com/?q=21.5433,39.1728',
 			),
 			array(
 				'Papa Knafah - Al Khobar',
@@ -211,7 +211,7 @@ class Import {
 				'26.2172,50.1971',
 				'+966 13 345 6789',
 				'Daily 12:00-24:00',
-				'Dine-in, Takeaway',
+				'https://maps.google.com/?q=26.2172,50.1971',
 			),
 		);
 	}
@@ -311,7 +311,7 @@ class Import {
 
 			// A row with a different column count than the header means this
 			// line is malformed — most often an un-escaped comma inside a text
-			// field (address, opening_hours, services) that shifts every value
+			// field (address, opening_hours) that shifts every value
 			// after it out of place. array_combine() requires two equal-length
 			// arrays; silently truncating one side (the previous behavior)
 			// either throws a ValueError (row longer than header) or quietly
@@ -371,15 +371,15 @@ class Import {
 			}
 
 			$meta_map = array(
-				'_asl_brand'         => $brand,
-				'_asl_country'       => $country,
-				'_asl_address'       => isset( $data['address'] ) ? sanitize_text_field( $data['address'] ) : '',
-				'_asl_latitude'      => (string) $lat,
-				'_asl_longitude'     => (string) $lng,
-				'_asl_coordinates'   => (string) $lat . ', ' . (string) $lng,
-				'_asl_phone'         => isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '',
-				'_asl_opening_hours' => isset( $data['opening_hours'] ) ? sanitize_textarea_field( $data['opening_hours'] ) : '',
-				'_asl_services'      => isset( $data['services'] ) ? sanitize_text_field( $data['services'] ) : '',
+				'_asl_brand'          => $brand,
+				'_asl_country'        => $country,
+				'_asl_address'        => isset( $data['address'] ) ? sanitize_text_field( $data['address'] ) : '',
+				'_asl_latitude'       => (string) $lat,
+				'_asl_longitude'      => (string) $lng,
+				'_asl_coordinates'    => (string) $lat . ', ' . (string) $lng,
+				'_asl_phone'          => isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '',
+				'_asl_opening_hours'  => isset( $data['opening_hours'] ) ? sanitize_textarea_field( $data['opening_hours'] ) : '',
+				'_asl_directions_url' => isset( $data['direction_url'] ) ? esc_url_raw( trim( $data['direction_url'] ) ) : '',
 			);
 
 			foreach ( $meta_map as $key => $value ) {
