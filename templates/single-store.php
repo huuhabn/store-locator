@@ -5,13 +5,12 @@
  * Loaded automatically for any `store` singular URL (see TemplateLoader).
  * Layout modeled after Victoria's Secret's store locator detail pages
  * (e.g. stores.victoriassecret.com/.../lingerie-1460.html): breadcrumb,
- * title, a three-column info panel (details / hours / services), and a
+ * title, a two-column info panel (details / hours), and a
  * content section below.
  *
  * A few things on the reference page don't have a matching data source in
- * this plugin and are intentionally left out rather than faked: per-brand
- * "Store Includes" vs. "Services" as two separate lists (this plugin has
- * one `services` field), and social media links (no such field exists).
+ * this plugin and are intentionally left out rather than faked: social
+ * media links (no such field exists).
  * The day-by-day hours table and "Open now"/"Closed" status ARE real,
  * computed from the free-text `_asl_opening_hours` field — see
  * Frontend/OpeningHours.php for how.
@@ -49,11 +48,9 @@ while ( have_posts() ) :
 	$phone          = get_post_meta( $store_id, '_asl_phone', true );
 	$email          = get_post_meta( $store_id, '_asl_email', true );
 	$opening_hours  = get_post_meta( $store_id, '_asl_opening_hours', true );
-	$services_raw   = get_post_meta( $store_id, '_asl_services', true );
 	$details        = get_post_meta( $store_id, '_asl_details', true );
 	$directions_url = get_post_meta( $store_id, '_asl_directions_url', true );
 
-	$services   = $services_raw ? array_filter( array_map( 'trim', explode( ',', $services_raw ) ) ) : array();
 	$hours_rows = OpeningHours::to_rows( $opening_hours );
 	$is_open    = OpeningHours::is_open_now( $opening_hours );
 
@@ -153,19 +150,6 @@ while ( have_posts() ) :
 							</tbody>
 						</table>
 					<?php endif; ?>
-				</div>
-			<?php endif; ?>
-
-			<?php if ( $services ) : ?>
-				<div class="asl-store-detail__col asl-store-detail__col--card">
-					<h2 class="asl-store-detail__col-label"><?php esc_html_e( 'Store Services', 'aseer-store-locator' ); ?></h2>
-
-					<p class="asl-card__tag-label"><?php esc_html_e( 'Services:', 'aseer-store-locator' ); ?></p>
-					<p class="asl-card__services">
-						<?php foreach ( $services as $service ) : ?>
-							<span class="asl-chip"><?php echo esc_html( $service ); ?></span>
-						<?php endforeach; ?>
-					</p>
 				</div>
 			<?php endif; ?>
 

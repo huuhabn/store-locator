@@ -35,7 +35,6 @@ class StorePostType {
 			'_asl_phone'            => array( __CLASS__, 'sanitize_text' ),
 			'_asl_email'            => array( __CLASS__, 'sanitize_email_field' ),
 			'_asl_opening_hours'    => array( __CLASS__, 'sanitize_textarea' ),
-			'_asl_services'         => array( __CLASS__, 'sanitize_text' ), // comma separated.
 			'_asl_details'          => array( __CLASS__, 'sanitize_html' ),
 			'_asl_directions_url'   => array( __CLASS__, 'sanitize_url' ),
 		);

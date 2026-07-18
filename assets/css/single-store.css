@@ -1,14 +1,14 @@
 /* =========================================================
    Aseer Store Locator — Single Store ("Listing Detail") page
    Loaded only on singular `store` pages. Reuses the color/
-   spacing CSS variables and .asl-btn / .asl-chip / .asl-card__*
-   classes already defined in store-locator.css (this file's
-   stylesheet dependency), so branding stays consistent between
-   the locator widget and the detail page automatically.
+   spacing CSS variables and the .asl-btn classes already defined
+   in store-locator.css (this file's stylesheet dependency), so
+   branding stays consistent between the locator widget and the
+   detail page automatically.
 
    Layout aligned with Aseer Time Store Locator (Figma Design):
-   breadcrumb -> title & brand -> white boxed panel with three-columns
-   (details / hours / services) -> map -> content.
+   breadcrumb -> title & brand -> white boxed panel with two columns
+   (details / hours) -> map -> content.
    ========================================================= */
 
 .asl-store-detail {
@@ -90,7 +90,7 @@
 
 .asl-store-detail__panel {
 	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr;
 	gap: 0;
 	background: var(--asl-color-bg);
 	border: 1px solid var(--asl-color-border-light);
@@ -110,12 +110,6 @@
 
 .asl-store-detail__col:first-child {
 	border-left: none;
-}
-
-/* Align column 3 inside the panel layout cleanly */
-.asl-store-detail__col--card {
-	border-left: 1px solid var(--asl-color-border-light);
-	background: var(--asl-color-bg);
 }
 
 .asl-store-detail__col-label {
@@ -240,38 +234,6 @@
 	color: var(--asl-color-subtext);
 }
 
-/* Column 3: services */
-
-.asl-card__tag-label {
-	font-family: var(--asl-font);
-	font-size: 14px;
-	font-weight: 700;
-	text-transform: uppercase;
-	color: var(--asl-color-muted);
-	margin: 0 0 12px;
-	letter-spacing: 0.02em;
-}
-
-.asl-card__services {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin: 0;
-}
-
-.asl-chip {
-	background: var(--asl-color-page);
-	color: var(--asl-color-heading);
-	border: 1px solid var(--asl-color-border-light);
-	border-radius: var(--asl-radius-md);
-	padding: 8px 14px;
-	font-family: var(--asl-font);
-	font-size: 14px;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.01em;
-}
-
 /* ---------------- Map ---------------- */
 
 .asl-store-detail__map {
@@ -377,10 +339,5 @@
 
 	.asl-store-detail__col:first-child {
 		border-top: none;
-	}
-
-	.asl-store-detail__col--card {
-		border-top: 1px solid var(--asl-color-border-light);
-		padding: 32px 24px;
 	}
 }

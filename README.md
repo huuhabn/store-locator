@@ -5,13 +5,13 @@ A store locator plugin built with Leaflet.js (Google Map API Support), a REST AP
 ## Features
 
 - Custom post type (`store`) for managing store data from wp-admin
-- 12 store fields: name, brand, country, city, address, lat/lng, phone, email, opening hours, services, details, directions URL
+- 11 store fields: name, brand, country, city, address, lat/lng, phone, email, opening hours, details, directions URL
 - CSV importer for bulk loading 500+ stores (create + update in one pass)
 - Frontend shortcode `[store_locator]` with:
   - Interactive Leaflet.js map, choice of 4 basemap styles (see Settings)
   - Marker clustering, auto-fit bounds, popups, admin-configurable pin color/icon
   - Search box with "use my location" + place autocomplete (OpenStreetMap Nominatim)
-  - Collapsible filter panel: checkbox filters for brand/services, dropdown filters for country/city
+  - Collapsible filter panel: checkbox filters for brand, dropdown filters for country/city
   - Nearest-first sorting once the user shares their location
   - Store cards with open/closed status, expandable hours, distance, directions button, details modal
   - Mobile map/list toggle layout
@@ -23,7 +23,7 @@ A store locator plugin built with Leaflet.js (Google Map API Support), a REST AP
 
 ## Listing Detail Page (Overriding Templates)
 
-Every store is a real WordPress page at its own URL (e.g. `/store/altamonte-mall/`), rendered by `templates/single-store.php` — a normal WordPress Loop template (title, featured image, address, phone/email, hours, services, a small map, and a Directions button).
+Every store is a real WordPress page at its own URL (e.g. `/store/altamonte-mall/`), rendered by `templates/single-store.php` — a normal WordPress Loop template (title, featured image, address, phone/email, hours, a small map, and a Directions button).
 
 **To customize it:** copy the file to your theme (or child theme) at
 
@@ -47,15 +47,15 @@ The `[store_locator]` widget's own template (`templates/locator.php`) can be ove
 ## Adding Stores
 
 **Manually:**
-Go to **Store Locator → Add New Store**, fill in the title (store name) and the Store Details meta box fields (brand, country, city, address, latitude/longitude, phone, email, hours, services, details, directions URL override), then Publish.
+Go to **Store Locator → Add New Store**, fill in the title (store name) and the Store Details meta box fields (brand, country, city, address, latitude/longitude, phone, email, hours, details, directions URL override), then Publish.
 
 **Via CSV (recommended for 500+ locations):**
 1. Go to **Store Locator → Import CSV**.
 2. Prepare a CSV with this exact column order:
    ```
-   name,brand,country,city,address,latitude,longitude,phone,opening_hours,services
+   name,store_brand,store_country,address,coordinates,phone,opening_hours,direction_url
    ```
-   (see `stores-example.csv` in this package for a working sample)
+   (`coordinates` is a single `"lat,lng"` cell, and `direction_url` is an optional external directions link — wrap any value containing a comma in quotes. See `stores-example.csv` in this package for a working sample.)
 3. Upload the file and click **Import Stores**.
 4. Existing stores are matched by exact **Store Name + Brand** and updated; unmatched rows are created as new stores. Invalid rows (missing name, out-of-range lat/lng, or a column count that doesn't match the header — usually an un-quoted comma inside a text field) are skipped and reported in the results summary instead of failing the whole import.
 
@@ -128,8 +128,8 @@ The search box's autocomplete suggestions come from OpenStreetMap's free Nominat
 
 ## REST API Reference
 
-- `GET /wp-json/aseer-store-locator/v1/stores` — params: `brand`, `country`, `city`, `services`, `search`, `page`, `per_page` (max 500)
-- `GET /wp-json/aseer-store-locator/v1/filters` — returns distinct brand/country/city/service values for populating filter dropdowns
+- `GET /wp-json/aseer-store-locator/v1/stores` — params: `brand`, `country`, `city`, `search`, `page`, `per_page` (max 500)
+- `GET /wp-json/aseer-store-locator/v1/filters` — returns distinct brand/country/city values for populating filter dropdowns
 
 Both endpoints are public/read-only (`GET` only) and return published stores only.
 
@@ -194,3 +194,8 @@ aseer-store-locator/
 
 - **Fixed: `[store_locator]` still not working in the Elementor editor.** The earlier fix only addressed detecting the shortcode in a page's content; the actual reason it "mostly doesn't work" while editing is that Elementor's Shortcode widget re-renders via an AJAX request straight to `admin-ajax.php` whenever its content changes — that request type never fires `wp_enqueue_scripts` at all (no page/footer to print into), so there's no way to catch it after the fact. Fixed by always loading the plugin's assets on Elementor's preview-iframe page load (detected via its `elementor-preview` query var), so they're already present in the iframe before any later AJAX re-render happens.
 - **Added a slim scrollbar** to the store list panel (and, for consistency, the search autocomplete dropdown and the details modal) instead of the browser's default scrollbar — styled via `--asl-color-border`/`--asl-color-muted`, works in both Firefox (`scrollbar-width`/`scrollbar-color`) and Chromium/Safari (`::-webkit-scrollbar`).
+
+## v1.5.28
+
+- **Removed the "Services" field.** The per-store services list has been dropped everywhere — the `_asl_services` meta box field and registration, the REST `services` query param and the `services` values in the `/stores` and `/filters` responses, the "Store Services" column on the single-store detail page (now a two-column Details / Hours panel), and the related CSS. Any previously stored `_asl_services` post meta is simply ignored.
+- **CSV import: `services` column replaced with `direction_url`.** The importer now maps the last column to the store's external directions URL (`_asl_directions_url`) instead of services, sanitized as a URL. The downloadable example template and `stores-example.csv` were updated to match. Wrap any URL containing a comma (e.g. `?q=lat,lng`) in quotes so it stays a single CSV field.

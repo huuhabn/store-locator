@@ -50,7 +50,6 @@ class StoreController {
 					'brand'    => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
 					'country'  => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
 					'city'     => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
-					'services' => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
 					'search'   => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
 					'page'     => array( 'type' => 'integer', 'default' => 1 ),
 					'per_page' => array( 'type' => 'integer', 'default' => 100 ),
@@ -113,15 +112,6 @@ class StoreController {
 				'taxonomy' => 'store_country',
 				'field'    => 'name',
 				'terms'    => $country,
-			);
-		}
-
-		$services = $request->get_param( 'services' );
-		if ( ! empty( $services ) ) {
-			$meta_query[] = array(
-				'key'     => '_asl_services',
-				'value'   => $services,
-				'compare' => 'LIKE',
 			);
 		}
 
@@ -213,7 +203,7 @@ class StoreController {
 	}
 
 	/**
-	 * GET /filters — distinct brand/country/city/services values for filter UI.
+	 * GET /filters — distinct brand/country/city values for filter UI.
 	 *
 	 * @return WP_REST_Response
 	 */
@@ -236,18 +226,6 @@ class StoreController {
 				)
 			);
 		};
-
-		$services_raw = $get_distinct( '_asl_services' );
-		$services     = array();
-		foreach ( $services_raw as $csv ) {
-			foreach ( explode( ',', $csv ) as $service ) {
-				$service = trim( $service );
-				if ( '' !== $service && ! in_array( $service, $services, true ) ) {
-					$services[] = $service;
-				}
-			}
-		}
-		sort( $services );
 
 		$terms = get_terms(
 			array(
@@ -308,7 +286,6 @@ class StoreController {
 				'brands'          => $brands,
 				'countries'       => $countries,
 				'cities'          => $get_distinct( '_asl_city' ),
-				'services'        => $services,
 				'brandLogos'      => BrandLogos::map_for_brands( $brands ),
 				'brandLogosFull'  => BrandLogos::map_full_for_brands( $brands ),
 			)
@@ -326,9 +303,6 @@ class StoreController {
 
 		$lat = (float) get_post_meta( $id, '_asl_latitude', true );
 		$lng = (float) get_post_meta( $id, '_asl_longitude', true );
-
-		$services_raw = get_post_meta( $id, '_asl_services', true );
-		$services     = $services_raw ? array_map( array( $this, 'decode_entities' ), array_map( 'trim', explode( ',', $services_raw ) ) ) : array();
 
 		$directions_url = get_post_meta( $id, '_asl_directions_url', true );
 		if ( empty( $directions_url ) && $lat && $lng ) {
@@ -367,7 +341,6 @@ class StoreController {
 			'phone'          => $this->decode_entities( get_post_meta( $id, '_asl_phone', true ) ),
 			'email'          => $this->decode_entities( get_post_meta( $id, '_asl_email', true ) ),
 			'opening_hours'  => $this->decode_entities( get_post_meta( $id, '_asl_opening_hours', true ) ),
-			'services'       => $services,
 			'details'        => wp_kses_post( get_post_meta( $id, '_asl_details', true ) ),
 			'directions_url' => esc_url_raw( $directions_url ),
 			'thumbnail'      => get_the_post_thumbnail_url( $id, 'medium' ),

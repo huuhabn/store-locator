@@ -68,7 +68,6 @@ class MetaBoxes {
 			'_asl_phone'          => array( __( 'Phone Number', 'aseer-store-locator' ), 'text' ),
 			'_asl_email'          => array( __( 'Email', 'aseer-store-locator' ), 'email' ),
 			'_asl_opening_hours'  => array( __( 'Opening Hours', 'aseer-store-locator' ), 'textarea' ),
-			'_asl_services'       => array( __( 'Services (comma separated)', 'aseer-store-locator' ), 'text' ),
 			'_asl_details'        => array( __( 'Store Details', 'aseer-store-locator' ), 'wysiwyg' ),
 			'_asl_directions_url' => array( __( 'External Directions URL (optional override)', 'aseer-store-locator' ), 'text' ),
 		);

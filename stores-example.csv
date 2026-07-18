@@ -1,10 +1,10 @@
 name,store_brand,store_country,address,coordinates,phone,opening_hours,direction_url
-Aseer Time - Downtown,Aseer Time,Saudi Arabia,"King Fahd Road, Riyadh","24.7136,46.6753",+966 11 123 4567,"Mon-Sat 10:00-22:00",https://maps.google.com/?q=24.7136,46.6753
-Farooj Abu Alabd - City Mall,Farooj Abu Alabd,Saudi Arabia,"Tahlia Street, Jeddah","21.5433,39.1728",+966 12 234 5678,"Sun-Thu 09:00-23:00",https://maps.google.com/?q=21.5433,39.1728
-Papa Knafah - Al Khobar,Papa Knafah,Saudi Arabia,"Prince Turki Street, Al Khobar","26.2172,50.1971",+966 13 345 6789,"Daily 12:00-24:00",https://maps.google.com/?q=26.2172,50.1971
-Aseer Time - Dubai Mall,Aseer Time,United Arab Emirates,"Dubai Mall, Downtown Dubai","25.1972,55.2796",+971 4 456 7890,"Daily 10:00-22:00",https://maps.google.com/?q=25.1972,55.2796
-Farooj Abu Alabd - Sharjah,Farooj Abu Alabd,United Arab Emirates,"Al Majaz, Sharjah","25.3223,55.3910",+971 6 543 2100,"Daily 10:00-23:00",https://maps.google.com/?q=25.3223,55.3910
-Aseer Time - New York,Aseer Time,United States,"Times Square, New York","40.7580,-73.9855",+1 212 555 0100,"Daily 10:00-22:00",https://maps.google.com/?q=40.7580,-73.9855
-Farooj Abu Alabd - Los Angeles,Farooj Abu Alabd,United States,"Sunset Blvd, Los Angeles","34.0928,-118.3287",+1 323 555 0200,"Daily 11:00-23:00",https://maps.google.com/?q=34.0928,-118.3287
-Aseer Time - Madrid,Aseer Time,Español,"Gran Via, Madrid","40.4203,-3.7037",+34 91 123 4567,"Mon-Sat 10:00-21:00",https://maps.google.com/?q=40.4203,-3.7037
-Papa Knafah - Barcelona,Papa Knafah,Español,"La Rambla, Barcelona","41.3825,2.1770",+34 93 234 5678,"Daily 12:00-24:00",https://maps.google.com/?q=41.3825,2.1770
+Aseer Time - Downtown,Aseer Time,Saudi Arabia,"King Fahd Road, Riyadh","24.7136,46.6753",+966 11 123 4567,"Mon-Sat 10:00-22:00","https://maps.google.com/?q=24.7136,46.6753"
+Farooj Abu Alabd - City Mall,Farooj Abu Alabd,Saudi Arabia,"Tahlia Street, Jeddah","21.5433,39.1728",+966 12 234 5678,"Sun-Thu 09:00-23:00","https://maps.google.com/?q=21.5433,39.1728"
+Papa Knafah - Al Khobar,Papa Knafah,Saudi Arabia,"Prince Turki Street, Al Khobar","26.2172,50.1971",+966 13 345 6789,"Daily 12:00-24:00","https://maps.google.com/?q=26.2172,50.1971"
+Aseer Time - Dubai Mall,Aseer Time,United Arab Emirates,"Dubai Mall, Downtown Dubai","25.1972,55.2796",+971 4 456 7890,"Daily 10:00-22:00","https://maps.google.com/?q=25.1972,55.2796"
+Farooj Abu Alabd - Sharjah,Farooj Abu Alabd,United Arab Emirates,"Al Majaz, Sharjah","25.3223,55.3910",+971 6 543 2100,"Daily 10:00-23:00","https://maps.google.com/?q=25.3223,55.3910"
+Aseer Time - New York,Aseer Time,United States,"Times Square, New York","40.7580,-73.9855",+1 212 555 0100,"Daily 10:00-22:00","https://maps.google.com/?q=40.7580,-73.9855"
+Farooj Abu Alabd - Los Angeles,Farooj Abu Alabd,United States,"Sunset Blvd, Los Angeles","34.0928,-118.3287",+1 323 555 0200,"Daily 11:00-23:00","https://maps.google.com/?q=34.0928,-118.3287"
+Aseer Time - Madrid,Aseer Time,Español,"Gran Via, Madrid","40.4203,-3.7037",+34 91 123 4567,"Mon-Sat 10:00-21:00","https://maps.google.com/?q=40.4203,-3.7037"
+Papa Knafah - Barcelona,Papa Knafah,Español,"La Rambla, Barcelona","41.3825,2.1770",+34 93 234 5678,"Daily 12:00-24:00","https://maps.google.com/?q=41.3825,2.1770"
