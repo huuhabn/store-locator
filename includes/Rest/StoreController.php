@@ -25,12 +25,77 @@ class StoreController {
 	const NAMESPACE_ = 'aseer-store-locator/v1';
 
 	/**
+	 * Transient key for the cached /filters payload.
+	 */
+	const FILTERS_CACHE_KEY = 'asl_filters_payload';
+
+	/**
+	 * How long the /filters payload stays cached (busted on relevant writes).
+	 */
+	const FILTERS_CACHE_TTL = DAY_IN_SECONDS;
+
+	/**
 	 * Hook into WordPress.
 	 *
 	 * @return void
 	 */
 	public function register() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+
+		// The /filters payload is fetched on every locator page load but only
+		// changes when a store or its brand/country taxonomy changes — cache it
+		// and bust that cache on the writes that could affect it.
+		add_action( 'save_post_' . StorePostType::POST_TYPE, array( $this, 'flush_filters_cache' ) );
+		add_action( 'deleted_post', array( $this, 'flush_filters_cache_for_post' ), 10, 2 );
+
+		// Status changes (publish/trash/untrash/draft) don't fire save_post but
+		// still change the published-only payload, so catch them too.
+		add_action( 'transition_post_status', array( $this, 'flush_filters_cache_on_status' ), 10, 3 );
+
+		foreach ( array( 'store_brand', 'store_country' ) as $taxonomy ) {
+			add_action( "created_{$taxonomy}", array( $this, 'flush_filters_cache' ) );
+			add_action( "edited_{$taxonomy}", array( $this, 'flush_filters_cache' ) );
+			add_action( "delete_{$taxonomy}", array( $this, 'flush_filters_cache' ) );
+		}
+	}
+
+	/**
+	 * Delete the cached /filters payload.
+	 *
+	 * @return void
+	 */
+	public function flush_filters_cache() {
+		delete_transient( self::FILTERS_CACHE_KEY );
+	}
+
+	/**
+	 * Flush the /filters cache only when the deleted post is a store.
+	 *
+	 * @param int      $post_id Deleted post ID.
+	 * @param \WP_Post $post    Deleted post object.
+	 * @return void
+	 */
+	public function flush_filters_cache_for_post( $post_id, $post ) {
+		if ( $post instanceof \WP_Post && StorePostType::POST_TYPE === $post->post_type ) {
+			$this->flush_filters_cache();
+		}
+	}
+
+	/**
+	 * Flush the /filters cache when a store's post status changes.
+	 *
+	 * @param string   $new_status New post status.
+	 * @param string   $old_status Previous post status.
+	 * @param \WP_Post $post       The post whose status changed.
+	 * @return void
+	 */
+	public function flush_filters_cache_on_status( $new_status, $old_status, $post ) {
+		if ( $new_status === $old_status ) {
+			return;
+		}
+		if ( $post instanceof \WP_Post && StorePostType::POST_TYPE === $post->post_type ) {
+			$this->flush_filters_cache();
+		}
 	}
 
 	/**
@@ -116,13 +181,18 @@ class StoreController {
 		}
 
 		$args = array(
-			'post_type'      => StorePostType::POST_TYPE,
-			'post_status'    => 'publish',
-			'posts_per_page' => $per_page,
-			'paged'          => $page,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-			'no_found_rows'  => false,
+			'post_type'              => StorePostType::POST_TYPE,
+			'post_status'            => 'publish',
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'orderby'                => 'title',
+			'order'                  => 'ASC',
+			'no_found_rows'          => false,
+			// Prime the post-meta and object-term caches for the whole page in
+			// two batched queries so format_store() reads every field/term from
+			// cache instead of hitting the DB per post (see the N+1 note there).
+			'update_post_meta_cache' => true,
+			'update_post_term_cache' => true,
 		);
 
 		if ( count( $meta_query ) > 1 ) {
@@ -140,6 +210,8 @@ class StoreController {
 
 		$query   = new \WP_Query( $args );
 		$results = array();
+
+		$this->prime_thumbnail_caches( $query->posts );
 
 		foreach ( $query->posts as $post ) {
 			$results[] = $this->format_store( $post );
@@ -194,6 +266,8 @@ class StoreController {
 			)
 		);
 
+		$this->prime_thumbnail_caches( $query->posts );
+
 		$results = array();
 		foreach ( $query->posts as $post ) {
 			$results[] = $this->format_store( $post );
@@ -203,91 +277,173 @@ class StoreController {
 	}
 
 	/**
+	 * Bulk-prime featured-image (attachment) caches for a set of store posts.
+	 *
+	 * get_the_post_thumbnail_url() otherwise loads each attachment post and its
+	 * `_wp_attachment_metadata` individually — an N+1 that adds up to one page
+	 * of stores' worth of extra queries. Priming them all at once collapses
+	 * that into a couple of batched queries.
+	 *
+	 * @param \WP_Post[] $posts Store posts.
+	 * @return void
+	 */
+	private function prime_thumbnail_caches( $posts ) {
+		if ( empty( $posts ) ) {
+			return;
+		}
+
+		$thumb_ids = array();
+		foreach ( $posts as $post ) {
+			$thumb_id = get_post_thumbnail_id( $post->ID );
+			if ( $thumb_id ) {
+				$thumb_ids[] = (int) $thumb_id;
+			}
+		}
+
+		if ( ! empty( $thumb_ids ) ) {
+			_prime_post_caches( array_unique( $thumb_ids ), false, true );
+		}
+	}
+
+	/**
 	 * GET /filters — distinct brand/country/city values for filter UI.
+	 *
+	 * The payload is served from a transient (busted on the writes hooked in
+	 * register()) so the underlying term/meta queries only run when the data
+	 * actually changes, not on every locator page load.
 	 *
 	 * @return WP_REST_Response
 	 */
 	public function get_filters() {
-		global $wpdb;
+		$payload = get_transient( self::FILTERS_CACHE_KEY );
 
-		$get_distinct = function ( $meta_key ) use ( $wpdb ) {
-			return $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT DISTINCT pm.meta_value
-					 FROM {$wpdb->postmeta} pm
-					 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-					 WHERE pm.meta_key = %s
-					 AND pm.meta_value != ''
-					 AND p.post_type = %s
-					 AND p.post_status = 'publish'
-					 ORDER BY pm.meta_value ASC",
-					$meta_key,
-					StorePostType::POST_TYPE
-				)
-			);
-		};
+		if ( false === $payload ) {
+			$payload = $this->build_filters_payload();
+			set_transient( self::FILTERS_CACHE_KEY, $payload, self::FILTERS_CACHE_TTL );
+		}
 
-		$terms = get_terms(
+		return new WP_REST_Response( $payload );
+	}
+
+	/**
+	 * Build the /filters payload from the database.
+	 *
+	 * @return array
+	 */
+	private function build_filters_payload() {
+		$brands = $this->get_brand_names();
+
+		return array(
+			'brands'         => $brands,
+			'countries'      => $this->get_countries(),
+			'cities'         => $this->get_distinct_meta( '_asl_city' ),
+			'brandLogos'     => BrandLogos::map_for_brands( $brands ),
+			'brandLogosFull' => BrandLogos::map_full_for_brands( $brands ),
+		);
+	}
+
+	/**
+	 * Distinct brand names, from the taxonomy (preferred) or legacy meta.
+	 *
+	 * @return string[]
+	 */
+	private function get_brand_names() {
+		$terms  = get_terms(
 			array(
 				'taxonomy'   => 'store_brand',
 				'hide_empty' => false,
 			)
 		);
-		$brands = array();
-		if ( ! is_wp_error( $terms ) ) {
-			foreach ( $terms as $term ) {
-				$brands[] = $term->name;
-			}
-		}
+		$brands = ( ! is_wp_error( $terms ) ) ? wp_list_pluck( $terms, 'name' ) : array();
 
-		// Fallback to legacy distinct metadata if taxonomy is completely empty.
+		// Fallback to legacy distinct metadata if the taxonomy is empty.
 		if ( empty( $brands ) ) {
-			$brands = $get_distinct( '_asl_brand' );
+			$brands = $this->get_distinct_meta( '_asl_brand' );
 		}
 
-		$country_terms = get_terms(
+		return array_values( $brands );
+	}
+
+	/**
+	 * Distinct countries (with flag emoji + optional custom flag image URL),
+	 * from the taxonomy (preferred) or legacy meta.
+	 *
+	 * @return array<int,array{name:string,flag:string,flag_url:string}>
+	 */
+	private function get_countries() {
+		$terms = get_terms(
 			array(
 				'taxonomy'   => 'store_country',
 				'hide_empty' => false,
 			)
 		);
-		$countries = array();
-		if ( ! is_wp_error( $country_terms ) && ! empty( $country_terms ) ) {
-			foreach ( $country_terms as $term ) {
+
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			// Bulk-prime the flag attachment caches so the per-country
+			// wp_get_attachment_url() calls below don't each hit the DB.
+			$flag_ids = array_filter(
+				array_map(
+					static function ( $term ) {
+						return (int) get_term_meta( $term->term_id, 'asl_country_flag_id', true );
+					},
+					$terms
+				)
+			);
+			if ( ! empty( $flag_ids ) ) {
+				_prime_post_caches( array_values( array_unique( $flag_ids ) ), false, true );
+			}
+
+			$countries = array();
+			foreach ( $terms as $term ) {
 				$code     = StorePostType::country_name_to_code( $term->name );
-				$flag     = $code ? StorePostType::country_code_to_flag( $code ) : '';
-				$flag_id  = get_term_meta( $term->term_id, 'asl_country_flag_id', true );
+				$flag_id  = (int) get_term_meta( $term->term_id, 'asl_country_flag_id', true );
 				$flag_url = $flag_id ? wp_get_attachment_url( $flag_id ) : '';
 
 				$countries[] = array(
 					'name'     => $term->name,
-					'flag'     => $flag,
+					'flag'     => $code ? StorePostType::country_code_to_flag( $code ) : '',
 					'flag_url' => $flag_url ? esc_url_raw( $flag_url ) : '',
 				);
 			}
+
+			return $countries;
 		}
 
-		// Fallback to legacy distinct metadata with flag guessing if taxonomy is completely empty.
-		if ( empty( $countries ) ) {
-			$legacy_countries = $get_distinct( '_asl_country' );
-			foreach ( $legacy_countries as $name ) {
-				$code = StorePostType::country_name_to_code( $name );
-				$flag = $code ? StorePostType::country_code_to_flag( $code ) : '';
-				$countries[] = array(
-					'name'     => $name,
-					'flag'     => $flag,
-					'flag_url' => '',
-				);
-			}
+		// Fallback to legacy distinct metadata with flag guessing.
+		$countries = array();
+		foreach ( $this->get_distinct_meta( '_asl_country' ) as $name ) {
+			$code = StorePostType::country_name_to_code( $name );
+			$countries[] = array(
+				'name'     => $name,
+				'flag'     => $code ? StorePostType::country_code_to_flag( $code ) : '',
+				'flag_url' => '',
+			);
 		}
 
-		return new WP_REST_Response(
-			array(
-				'brands'          => $brands,
-				'countries'       => $countries,
-				'cities'          => $get_distinct( '_asl_city' ),
-				'brandLogos'      => BrandLogos::map_for_brands( $brands ),
-				'brandLogosFull'  => BrandLogos::map_full_for_brands( $brands ),
+		return $countries;
+	}
+
+	/**
+	 * Distinct non-empty values of a meta key across published stores.
+	 *
+	 * @param string $meta_key Meta key to collect.
+	 * @return string[]
+	 */
+	private function get_distinct_meta( $meta_key ) {
+		global $wpdb;
+
+		return $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT pm.meta_value
+				 FROM {$wpdb->postmeta} pm
+				 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				 WHERE pm.meta_key = %s
+				 AND pm.meta_value != ''
+				 AND p.post_type = %s
+				 AND p.post_status = 'publish'
+				 ORDER BY pm.meta_value ASC",
+				$meta_key,
+				StorePostType::POST_TYPE
 			)
 		);
 	}
@@ -316,24 +472,8 @@ class StoreController {
 		return array(
 			'id'             => $id,
 			'name'           => $this->decode_entities( get_the_title( $id ) ),
-			'brand'          => $this->decode_entities(
-				( function() use ( $id ) {
-					$store_brands = wp_get_post_terms( $id, 'store_brand' );
-					if ( ! is_wp_error( $store_brands ) && ! empty( $store_brands ) ) {
-						return $store_brands[0]->name;
-					}
-					return get_post_meta( $id, '_asl_brand', true );
-				} )()
-			),
-			'country'        => $this->decode_entities(
-				( function() use ( $id ) {
-					$store_countries = wp_get_post_terms( $id, 'store_country' );
-					if ( ! is_wp_error( $store_countries ) && ! empty( $store_countries ) ) {
-						return $store_countries[0]->name;
-					}
-					return get_post_meta( $id, '_asl_country', true );
-				} )()
-			),
+			'brand'          => $this->decode_entities( $this->first_term_name( $id, 'store_brand', '_asl_brand' ) ),
+			'country'        => $this->decode_entities( $this->first_term_name( $id, 'store_country', '_asl_country' ) ),
 			'city'           => $this->decode_entities( get_post_meta( $id, '_asl_city', true ) ),
 			'address'        => $this->decode_entities( get_post_meta( $id, '_asl_address', true ) ),
 			'latitude'       => $lat,
@@ -345,6 +485,27 @@ class StoreController {
 			'directions_url' => esc_url_raw( $directions_url ),
 			'thumbnail'      => get_the_post_thumbnail_url( $id, 'medium' ),
 		);
+	}
+
+	/**
+	 * First assigned term name for a taxonomy, falling back to a legacy meta
+	 * value when the store hasn't been migrated to the taxonomy yet.
+	 *
+	 * Uses get_the_terms() (served from the object-term cache primed by
+	 * WP_Query) rather than wp_get_post_terms(), which always hits the DB and
+	 * caused a per-post N+1 in the store list.
+	 *
+	 * @param int    $id            Store post ID.
+	 * @param string $taxonomy      Taxonomy slug.
+	 * @param string $fallback_meta Legacy meta key to read if no term is set.
+	 * @return string
+	 */
+	private function first_term_name( $id, $taxonomy, $fallback_meta ) {
+		$terms = get_the_terms( $id, $taxonomy );
+		if ( is_array( $terms ) && ! empty( $terms ) ) {
+			return $terms[0]->name;
+		}
+		return (string) get_post_meta( $id, $fallback_meta, true );
 	}
 
 	/**
